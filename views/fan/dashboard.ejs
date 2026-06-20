@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../../partials/navbar') %>
+<%- include('../../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <!-- Mobile sidebar toggle -->
+    <button class="btn btn-secondary btn-sm mb-6" id="sidebarToggle" style="display:none;">☰ Menu</button>
+
+    <div class="page-header flex-between">
+      <div>
+        <h1 class="page-title">Welcome back, <%= currentUser.firstName %>! 👋</h1>
+        <p class="page-subtitle">Here's what's happening with your account</p>
+      </div>
+      <a href="/events" class="btn btn-primary">Browse Events</a>
+    </div>
+
+    <!-- Verify Email Banner -->
+    <% if (!currentUser.isEmailVerified) { %>
+    <div class="alert alert-warning mb-8">
+      <span class="alert__icon">⚠️</span>
+      <div class="alert__content">
+        <strong>Verify your email</strong> — Check your inbox to verify your email address and unlock all features.
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card animate-fade-up">
+        <div class="stat-card__icon">🎟️</div>
+        <div class="stat-card__label">Total Tickets</div>
+        <div class="stat-card__value"><%= stats.totalTickets %></div>
+      </div>
+      <div class="stat-card animate-fade-up delay-1">
+        <div class="stat-card__icon">🎪</div>
+        <div class="stat-card__label">Upcoming Events</div>
+        <div class="stat-card__value"><%= stats.upcomingEvents %></div>
+      </div>
+      <div class="stat-card animate-fade-up delay-2">
+        <div class="stat-card__icon">⭐</div>
+        <div class="stat-card__label">Fan Clubs Joined</div>
+        <div class="stat-card__value"><%= stats.fanClubs %></div>
+      </div>
+      <div class="stat-card animate-fade-up delay-3">
+        <div class="stat-card__icon">🔔</div>
+        <div class="stat-card__label">Notifications</div>
+        <div class="stat-card__value"><%= unreadCount %></div>
+      </div>
+    </div>
+
+    <!-- Upcoming Tickets -->
+    <div class="content-block">
+      <div class="card__header">
+        <h3 style="font-size:var(--text-lg)">Upcoming Events</h3>
+        <a href="/fan/tickets" class="btn btn-ghost btn-sm">View All →</a>
+      </div>
+
+      <% if (tickets.length === 0) { %>
+      <div style="text-align:center;padding:var(--space-12);">
+        <div style="font-size:64px;margin-bottom:var(--space-4);">🎟️</div>
+        <h4 style="margin-bottom:var(--space-3);">No Upcoming Events</h4>
+        <p style="color:var(--text-muted);margin-bottom:var(--space-6);">You don't have any upcoming event tickets. Browse events to get started!</p>
+        <a href="/events" class="btn btn-primary">Browse Events</a>
+      </div>
+      <% } else { %>
+      <div class="ticket-grid" style="padding:var(--space-5);">
+        <% tickets.forEach(ticket => { %>
+        <a href="/fan/tickets/<%= ticket._id %>" class="ticket-card ticket-<%= ticket.ticketCategory %>" style="display:block;text-decoration:none;">
+          <div class="ticket-card__header">
+            <div>
+              <div class="ticket-card__event"><%= ticket.event?.title || 'Event' %></div>
+              <div class="ticket-card__number"># <%= ticket.ticketNumber %></div>
+            </div>
+            <span class="badge badge-<%= ticket.status === 'active' ? 'success' : 'warning' %>">
+              <%= ticket.status %>
+            </span>
+          </div>
+          <div class="ticket-card__body">
+            <div class="ticket-card__row">
+              <span class="ticket-card__label">Date</span>
+              <span class="ticket-card__value"><%= ticket.event?.startDate ? new Date(ticket.event.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '–' %></span>
+            </div>
+            <div class="ticket-card__row">
+              <span class="ticket-card__label">Category</span>
+              <span class="ticket-card__value" style="text-transform:capitalize;"><%= ticket.ticketLabel || ticket.ticketCategory %></span>
+            </div>
+            <div class="ticket-card__row">
+              <span class="ticket-card__label">Venue</span>
+              <span class="ticket-card__value"><%= ticket.event?.venue?.name || (ticket.event?.type === 'virtual' ? 'Virtual' : '–') %></span>
+            </div>
+          </div>
+        </a>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Recent Notifications -->
+    <% if (recentNotifications.length > 0) { %>
+    <div class="content-block">
+      <div class="card__header">
+        <h3 style="font-size:var(--text-lg)">Recent Notifications</h3>
+        <a href="/fan/notifications" class="btn btn-ghost btn-sm">View All →</a>
+      </div>
+      <div style="padding:var(--space-2) 0;">
+        <% recentNotifications.forEach(notif => { %>
+        <div style="display:flex;align-items:flex-start;gap:var(--space-4);padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--border-subtle);">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(124,58,237,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <%= notif.type.includes('payment') ? '💳' : notif.type.includes('ticket') ? '🎟️' : notif.type.includes('event') ? '🎪' : '🔔' %>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:2px;"><%= notif.title %></div>
+            <div style="font-size:var(--text-xs);color:var(--text-muted);"><%= notif.message %></div>
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:4px;"><%= new Date(notif.createdAt).toLocaleDateString() %></div>
+          </div>
+          <% if (!notif.isRead) { %><div style="width:8px;height:8px;border-radius:50%;background:var(--color-brand-fuchsia);flex-shrink:0;margin-top:6px;"></div><% } %>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+  </main>
+</div>
+
+<%- include('../../partials/footer') %>
+<script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

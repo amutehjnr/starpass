@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../../partials/navbar') %>
+<%- include('../../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">Admin Dashboard 🛡️</h1>
+      <p class="page-subtitle">Platform overview and management</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card animate-fade-up">
+        <div class="stat-card__icon">👥</div>
+        <div class="stat-card__label">Total Users</div>
+        <div class="stat-card__value"><%= stats.totalUsers.toLocaleString() %></div>
+        <div class="stat-card__change up">↑ <%= stats.monthlyUsers %> this month</div>
+      </div>
+      <div class="stat-card animate-fade-up delay-1">
+        <div class="stat-card__icon">⭐</div>
+        <div class="stat-card__label">Celebrities</div>
+        <div class="stat-card__value"><%= stats.totalCelebrities %></div>
+      </div>
+      <div class="stat-card animate-fade-up delay-2">
+        <div class="stat-card__icon">🎪</div>
+        <div class="stat-card__label">Live Events</div>
+        <div class="stat-card__value"><%= stats.totalEvents %></div>
+      </div>
+      <div class="stat-card animate-fade-up delay-3">
+        <div class="stat-card__icon">🎟️</div>
+        <div class="stat-card__label">Active Tickets</div>
+        <div class="stat-card__value"><%= stats.totalTickets.toLocaleString() %></div>
+      </div>
+      <div class="stat-card animate-fade-up delay-4" style="border-color:var(--color-warning-bg);">
+        <div class="stat-card__icon">⏳</div>
+        <div class="stat-card__label">Pending Reviews</div>
+        <div class="stat-card__value" style="color:var(--color-warning);"><%= stats.pendingPayments %></div>
+        <% if (stats.pendingPayments > 0) { %>
+        <a href="/admin/gift-cards" class="btn btn-warning btn-sm mt-4" style="margin-top:var(--space-4);">Review Now →</a>
+        <% } %>
+      </div>
+      <div class="stat-card animate-fade-up delay-5">
+        <div class="stat-card__icon">💰</div>
+        <div class="stat-card__label">Monthly Revenue</div>
+        <div class="stat-card__value">$<%= stats.monthlyRevenue.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0}) %></div>
+      </div>
+    </div>
+
+    <div class="grid-2 gap-6">
+
+      <!-- Pending Gift Card Reviews -->
+      <div class="content-block">
+        <div class="card__header">
+          <h3 style="font-size:var(--text-lg);">⏳ Pending Gift Card Reviews</h3>
+          <a href="/admin/gift-cards" class="btn btn-primary btn-sm">View All</a>
+        </div>
+
+        <% if (recentPayments.length === 0) { %>
+        <div style="text-align:center;padding:var(--space-10);color:var(--text-muted);">
+          <div style="font-size:48px;margin-bottom:var(--space-3);">✅</div>
+          <p>No pending reviews</p>
+        </div>
+        <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fan</th>
+                <th>Event</th>
+                <th>Card</th>
+                <th>Value</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% recentPayments.forEach(payment => { %>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:var(--space-3);">
+                    <img src="<%= payment.fan?.avatar?.url || '/images/defaults/avatar.png' %>" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+                    <div>
+                      <div style="font-weight:600;font-size:var(--text-sm);"><%= payment.fan?.firstName %> <%= payment.fan?.lastName %></div>
+                      <div style="font-size:var(--text-xs);color:var(--text-muted);"><%= payment.fan?.email %></div>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-size:var(--text-sm);"><%= payment.event?.title?.substring(0,30) %>...</td>
+                <td><span class="badge badge-muted"><%= payment.cardType %></span></td>
+                <td style="font-weight:700;color:var(--color-success);">$<%= payment.declaredValue %></td>
+                <td>
+                  <a href="/admin/gift-cards/<%= payment._id %>" class="btn btn-primary btn-sm">Review</a>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Recent Audit Logs -->
+      <div class="content-block">
+        <div class="card__header">
+          <h3 style="font-size:var(--text-lg);">📋 Recent Activity</h3>
+          <a href="/admin/audit-logs" class="btn btn-secondary btn-sm">All Logs</a>
+        </div>
+        <div>
+          <% recentAuditLogs.forEach(log => { %>
+          <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-5);border-bottom:1px solid var(--border-subtle);">
+            <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:<%= log.status === 'success' ? 'var(--color-success)' : 'var(--color-error)' %>;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:var(--text-xs);font-weight:600;font-family:var(--font-mono);color:var(--color-brand-violet);"><%= log.action %></div>
+              <div style="font-size:var(--text-xs);color:var(--text-muted);">
+                by <%= log.actor ? `${log.actor.firstName} ${log.actor.lastName}` : 'anonymous' %>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);flex-shrink:0;">
+              <%= new Date(log.createdAt).toLocaleTimeString() %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="content-block mt-6">
+      <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-5);">Quick Actions</h3>
+      <div class="grid-4">
+        <a href="/admin/gift-cards?status=pending" class="card" style="display:block;padding:var(--space-5);text-align:center;text-decoration:none;transition:all 0.2s;">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">💳</div>
+          <div style="font-weight:600;font-size:var(--text-sm);">Review Payments</div>
+        </a>
+        <a href="/admin/celebrities" class="card" style="display:block;padding:var(--space-5);text-align:center;text-decoration:none;transition:all 0.2s;">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">⭐</div>
+          <div style="font-weight:600;font-size:var(--text-sm);">Verify Celebrities</div>
+        </a>
+        <a href="/admin/reviews?approved=false" class="card" style="display:block;padding:var(--space-5);text-align:center;text-decoration:none;transition:all 0.2s;">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">⭐</div>
+          <div style="font-weight:600;font-size:var(--text-sm);">Moderate Reviews</div>
+        </a>
+        <a href="/admin/users" class="card" style="display:block;padding:var(--space-5);text-align:center;text-decoration:none;transition:all 0.2s;">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">👥</div>
+          <div style="font-weight:600;font-size:var(--text-sm);">Manage Users</div>
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../../partials/footer') %>
+<script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

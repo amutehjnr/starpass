@@ -1,0 +1,73 @@
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+.btn-primary {
+  background: var(--gradient-brand);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(124,58,237,0.3);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.5); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.btn-outline:hover { background: var(--bg-surface); border-color: var(--border-strong); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.btn-ghost:hover { background: var(--bg-surface); color: var(--text-primary); }
+
+.btn-danger { background: var(--color-error); color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+
+.btn-success { background: var(--color-success); color: #fff; }
+.btn-success:hover { background: #16a34a; }
+
+.btn-gold { background: var(--gradient-gold); color: #fff; }
+
+.btn-sm { padding: 7px 14px; font-size: var(--text-xs); }
+.btn-lg { padding: 14px 28px; font-size: var(--text-base); border-radius: var(--radius-lg); }
+.btn-xl { padding: 18px 36px; font-size: var(--text-lg); border-radius: var(--radius-xl); }
+.btn-full { width: 100%; }
+.btn-icon { padding: 10px; aspect-ratio: 1; }
+.btn-rounded { border-radius: var(--radius-full); }
+
+/* Loading spinner inside button */
+.btn.loading::after {
+  content: '';
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}

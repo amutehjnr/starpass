@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../partials/flash') %>
+
+<main style="padding-top:0;">
+  <div class="auth-page">
+    <div class="auth-card" style="max-width:520px;">
+      <div class="auth-card__header">
+        <a href="/" class="auth-logo">
+          <div class="auth-logo-icon">⭐</div>
+          <span class="auth-logo-text">StarPass</span>
+        </a>
+        <h1 class="auth-card__title">Create your account</h1>
+        <p class="auth-card__subtitle">Join thousands of fans on StarPass</p>
+      </div>
+
+      <div class="auth-card__body">
+        <form action="/auth/register" method="POST" id="registerForm">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Name <span class="required">*</span></label>
+              <input type="text" name="firstName" class="form-input" placeholder="John" required autocomplete="given-name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name <span class="required">*</span></label>
+              <input type="text" name="lastName" class="form-input" placeholder="Doe" required autocomplete="family-name">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="required">*</span></label>
+            <div class="input-group">
+              <span class="input-group-prefix">📧</span>
+              <input type="email" name="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password <span class="required">*</span></label>
+            <div class="input-group">
+              <span class="input-group-prefix">🔒</span>
+              <input type="password" name="password" id="passInput" class="form-input" placeholder="Min. 8 chars with upper, lower & number" required style="padding-right:44px;">
+              <button type="button" class="input-group-suffix" onclick="togglePass('passInput')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">👁️</button>
+            </div>
+            <!-- Password strength bar -->
+            <div style="margin-top:var(--space-2);">
+              <div style="height:3px;background:var(--bg-elevated);border-radius:4px;overflow:hidden;">
+                <div id="strengthBar" style="height:100%;width:0;background:var(--color-error);transition:all 0.3s;border-radius:4px;"></div>
+              </div>
+              <div id="strengthLabel" style="font-size:var(--text-xs);color:var(--text-muted);margin-top:4px;"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm Password <span class="required">*</span></label>
+            <div class="input-group">
+              <span class="input-group-prefix">🔒</span>
+              <input type="password" name="confirmPassword" id="confirmInput" class="form-input" placeholder="Re-enter your password" required style="padding-right:44px;">
+              <button type="button" class="input-group-suffix" onclick="togglePass('confirmInput')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">👁️</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-check">
+              <input type="checkbox" class="form-check-input" required>
+              <span class="form-check-label">I agree to the <a href="/terms" style="color:var(--color-brand-violet);">Terms of Service</a> and <a href="/privacy" style="color:var(--color-brand-violet);">Privacy Policy</a></span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+            Create Account
+          </button>
+        </form>
+      </div>
+
+      <div class="auth-footer">
+        Already have an account? <a href="/auth/login">Sign in</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+function togglePass(id){
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+// Password strength
+document.getElementById('passInput').addEventListener('input', function(){
+  const val = this.value;
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[a-z]/.test(val)) score++;
+  if (/\d/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+
+  const bar = document.getElementById('strengthBar');
+  const label = document.getElementById('strengthLabel');
+  const colors = ['', '#ef4444','#f97316','#eab308','#22c55e','#16a34a'];
+  const labels = ['','Weak','Fair','Good','Strong','Very Strong'];
+  bar.style.width = (score * 20) + '%';
+  bar.style.background = colors[score] || 'transparent';
+  label.textContent = score > 0 ? labels[score] : '';
+  label.style.color = colors[score] || 'var(--text-muted)';
+});
+
+document.getElementById('registerForm').addEventListener('submit', function(){
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  btn.textContent = '';
+});
+</script>
+</body>
+</html>

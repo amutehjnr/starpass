@@ -1,0 +1,92 @@
+<!-- views/auth/login.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../partials/flash') %>
+
+<main style="padding-top:0">
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card__header">
+        <a href="/" class="auth-logo">
+          <div class="auth-logo-icon">⭐</div>
+          <span class="auth-logo-text">StarPass</span>
+        </a>
+        <h1 class="auth-card__title">Welcome back</h1>
+        <p class="auth-card__subtitle">Sign in to your account to continue</p>
+      </div>
+
+      <div class="auth-card__body">
+        <form action="/auth/login" method="POST" id="loginForm">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% if (redirect) { %><input type="hidden" name="redirect" value="<%= redirect %>"><% } %>
+
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="required">*</span></label>
+            <div class="input-group">
+              <span class="input-group-prefix">📧</span>
+              <input type="email" name="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display:flex;justify-content:space-between;">
+              <span>Password <span class="required">*</span></span>
+              <a href="/auth/forgot-password" style="font-size:var(--text-xs);color:var(--color-brand-violet);font-weight:500;">Forgot password?</a>
+            </label>
+            <div class="input-group">
+              <span class="input-group-prefix">🔒</span>
+              <input type="password" name="password" id="passwordInput" class="form-input" placeholder="Enter your password" required autocomplete="current-password" style="padding-right:44px;">
+              <button type="button" class="input-group-suffix" onclick="togglePassword()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">👁️</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg mt-6" id="submitBtn">
+            Sign In
+          </button>
+        </form>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <div style="text-align:center;">
+          <p style="font-size:var(--text-sm);color:var(--text-muted);">Demo Accounts:</p>
+          <div style="display:flex;gap:var(--space-2);justify-content:center;flex-wrap:wrap;margin-top:var(--space-3);">
+            <button onclick="fillDemo('fan@demo.com','Demo@1234')" class="btn btn-outline btn-sm">Fan</button>
+            <button onclick="fillDemo('celebrity@demo.com','Demo@1234')" class="btn btn-outline btn-sm">Celebrity</button>
+            <button onclick="fillDemo('admin@demo.com','Demo@1234')" class="btn btn-outline btn-sm">Admin</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="/auth/register">Create one free</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+function togglePassword(){
+  const input = document.getElementById('passwordInput');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+function fillDemo(email, pass){
+  document.querySelector('[name="email"]').value = email;
+  document.getElementById('passwordInput').value = pass;
+}
+document.getElementById('loginForm').addEventListener('submit', function(){
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  btn.textContent = '';
+});
+</script>
+</body>
+</html>

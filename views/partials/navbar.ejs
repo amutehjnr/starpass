@@ -1,0 +1,113 @@
+<nav class="navbar" id="navbar">
+  <div class="navbar__inner">
+
+    <!-- Brand -->
+    <a href="/" class="navbar__brand">
+      <div class="navbar__brand-icon">⭐</div>
+      <span class="navbar__brand-text">StarPass</span>
+    </a>
+
+    <!-- Desktop Nav -->
+    <nav class="navbar__nav">
+      <a href="/celebrities" class="navbar__link <%= currentPath.startsWith('/celebrities') ? 'active' : '' %>">Celebrities</a>
+      <a href="/events"      class="navbar__link <%= currentPath.startsWith('/events') ? 'active' : '' %>">Events</a>
+      <a href="/fan-clubs"   class="navbar__link <%= currentPath.startsWith('/fan-clubs') ? 'active' : '' %>">Fan Clubs</a>
+      <a href="/about"       class="navbar__link <%= currentPath === '/about' ? 'active' : '' %>">About</a>
+    </nav>
+
+    <!-- Search -->
+    <div class="navbar__search" id="navSearch">
+      <span class="navbar__search-icon">🔍</span>
+      <input type="text" class="navbar__search-input" placeholder="Search celebrities & events…" id="searchInput" autocomplete="off">
+      <div class="navbar__search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="navbar__actions">
+
+      <% if (currentUser) { %>
+
+        <!-- Notification Bell -->
+        <a href="/fan/notifications" class="navbar__notif-btn" id="notifBtn" title="Notifications">
+          🔔
+          <span class="navbar__notif-badge hidden" id="notifBadge">0</span>
+        </a>
+
+        <!-- User Dropdown -->
+        <div class="navbar__user" id="userDropdown">
+          <button class="navbar__user-btn" id="userBtn">
+            <img
+              src="<%= currentUser.avatar?.url || '/images/defaults/avatar.png' %>"
+              alt="<%= currentUser.firstName %>"
+              class="navbar__avatar"
+              onerror="this.src='/images/defaults/avatar.png'"
+            >
+            <span class="navbar__user-name"><%= currentUser.firstName %></span>
+            <span class="navbar__chevron">▾</span>
+          </button>
+
+          <div class="navbar__dropdown">
+            <div class="navbar__dropdown-header">
+              <div class="navbar__dropdown-name"><%= currentUser.fullName || currentUser.firstName + ' ' + currentUser.lastName %></div>
+              <div class="navbar__dropdown-email"><%= currentUser.email %></div>
+              <span class="navbar__dropdown-role"><%= currentUser.role.replace('_', ' ') %></span>
+            </div>
+
+            <% if (['fan'].includes(currentUser.role)) { %>
+              <a href="/fan/dashboard"  class="navbar__dropdown-item">📊 Dashboard</a>
+              <a href="/fan/tickets"    class="navbar__dropdown-item">🎟️ My Tickets</a>
+              <a href="/fan/payments"   class="navbar__dropdown-item">💳 Payments</a>
+              <a href="/fan/fan-clubs"  class="navbar__dropdown-item">⭐ Fan Clubs</a>
+              <a href="/fan/profile"    class="navbar__dropdown-item">👤 Profile</a>
+            <% } %>
+
+            <% if (['celebrity','celebrity_manager','event_organizer'].includes(currentUser.role)) { %>
+              <a href="/celebrity/dashboard" class="navbar__dropdown-item">📊 Dashboard</a>
+              <a href="/celebrity/events"    class="navbar__dropdown-item">🎪 My Events</a>
+              <a href="/celebrity/fan-club"  class="navbar__dropdown-item">⭐ Fan Club</a>
+              <a href="/celebrity/analytics" class="navbar__dropdown-item">📈 Analytics</a>
+            <% } %>
+
+            <% if (['admin','super_admin','moderator'].includes(currentUser.role)) { %>
+              <a href="/admin/dashboard"   class="navbar__dropdown-item">🛡️ Admin Panel</a>
+              <a href="/admin/gift-cards"  class="navbar__dropdown-item">💳 Gift Cards</a>
+            <% } %>
+
+            <div class="navbar__dropdown-divider"></div>
+            <form action="/auth/logout" method="POST" style="margin:0;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="navbar__dropdown-item danger" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;">
+                🚪 Sign Out
+              </button>
+            </form>
+          </div>
+        </div>
+
+      <% } else { %>
+        <a href="/auth/login"    class="btn btn-secondary btn-sm">Login</a>
+        <a href="/auth/register" class="btn btn-primary btn-sm">Join Now</a>
+      <% } %>
+
+      <!-- Mobile Toggle -->
+      <button class="navbar__mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <span class="navbar__hamburger"></span>
+        <span class="navbar__hamburger"></span>
+        <span class="navbar__hamburger"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div class="navbar__mobile-menu" id="mobileMenu">
+    <nav class="navbar__mobile-nav">
+      <a href="/celebrities" class="navbar__mobile-link">Celebrities</a>
+      <a href="/events"      class="navbar__mobile-link">Events</a>
+      <a href="/fan-clubs"   class="navbar__mobile-link">Fan Clubs</a>
+      <a href="/about"       class="navbar__mobile-link">About</a>
+      <% if (!currentUser) { %>
+        <a href="/auth/login"    class="navbar__mobile-link">Login</a>
+        <a href="/auth/register" class="navbar__mobile-link">Join Now</a>
+      <% } %>
+    </nav>
+  </div>
+</nav>

@@ -1,0 +1,43 @@
+/* ============================================================
+   StarPass – Premium Design System
+   style.css (main entry – imports all partials)
+   ============================================================ */
+
+/* ── Base ────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import 'base/variables.css';
+@import 'base/reset.css';
+@import 'base/typography.css';
+@import 'base/animations.css';
+
+/* ── Layouts ─────────────────────────────────────────────── */
+@import 'layouts/navbar.css';
+@import 'layouts/sidebar.css';
+@import 'layouts/footer.css';
+@import 'layouts/dashboard.css';
+@import 'layouts/grid.css';
+
+/* ── Components ──────────────────────────────────────────── */
+@import 'components/buttons.css';
+@import 'components/cards.css';
+@import 'components/forms.css';
+@import 'components/badges.css';
+@import 'components/modals.css';
+@import 'components/alerts.css';
+@import 'components/tables.css';
+@import 'components/pagination.css';
+@import 'components/upload.css';
+@import 'components/stars.css';
+@import 'components/ticket.css';
+
+/* ── Pages ───────────────────────────────────────────────── */
+@import 'pages/home.css';
+@import 'pages/celebrity.css';
+@import 'pages/event.css';
+@import 'pages/auth.css';
+@import 'pages/fan-dashboard.css';
+@import 'pages/admin-dashboard.css';
+
+/* ── Utilities ───────────────────────────────────────────── */
+@import 'utilities/helpers.css';
+@import 'utilities/responsive.css';
