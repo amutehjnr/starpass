@@ -34,6 +34,28 @@
   .page-title       { font-size: var(--text-2xl); }
   .modal            { margin: var(--space-4); border-radius: var(--radius-xl); }
   .btn-xl           { padding: 14px 24px; font-size: var(--text-base); }
+
+  /* ── Navbar fit ──────────────────────────────────────── */
+  .navbar__inner {
+    padding: 0 var(--space-4);
+    gap: var(--space-2);
+  }
+  .navbar__brand-text { display: none; } /* icon only — saves horizontal space */
+  .navbar__actions { gap: 6px; }
+  .navbar__notif-btn { width: 36px; height: 36px; }
+  .navbar__user-btn { padding: 6px 8px; gap: 6px; }
+  .navbar__avatar { width: 26px; height: 26px; }
+  .navbar__mobile-toggle { width: 36px; height: 36px; }
+  .navbar__dropdown { right: -8px; min-width: 200px; }
+
+  /* ── Hero height on mobile ───────────────────────────── */
+  .hero { min-height: auto; }
+  .hero__inner {
+    padding: calc(var(--navbar-height) + var(--space-8)) var(--space-4) var(--space-10);
+  }
+  .hero__title    { margin-bottom: var(--space-4); }
+  .hero__subtitle { margin-bottom: var(--space-6); }
+  .hero__cta      { margin-bottom: var(--space-8); }
 }
 
 /* Small Mobile ≤ 480px */
@@ -44,6 +66,15 @@
   .pagination__btn { min-width: 34px; height: 34px; font-size: var(--text-xs); }
   .celeb-scroll__item { width: 160px; }
   .review-card__images { grid-template-columns: repeat(2,1fr); }
+
+  /* Navbar gets even tighter on very small phones */
+  .navbar__inner { padding: 0 var(--space-3); gap: 4px; }
+  .navbar__brand-icon { width: 30px; height: 30px; font-size: 15px; }
+  .navbar__notif-btn { width: 32px; height: 32px; font-size: 14px; }
+  .navbar__user-btn { padding: 4px 6px; }
+  .navbar__mobile-toggle { width: 32px; height: 32px; }
+
+  .hero__inner { padding-top: calc(var(--navbar-height) + var(--space-6)); padding-bottom: var(--space-8); }
 }
 
 /* Sidebar overlay on mobile */
