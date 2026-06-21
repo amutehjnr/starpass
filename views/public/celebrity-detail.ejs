@@ -11,10 +11,163 @@
 <%- include('../partials/navbar') %>
 <%- include('../partials/flash') %>
 <main>
+  <section class="celebrity-hero">
+    <img src="<%= celebrity.heroImage?.url || celebrity.profileImage?.url || '/images/defaults/avatar.png' %>" alt="" class="celebrity-hero__img">
+    <div class="celebrity-hero__bg"></div>
+    <div class="celebrity-hero__content">
+      <img src="<%= celebrity.profileImage?.url || '/images/defaults/avatar.png' %>" alt="<%= celebrity.stageName %>" class="celebrity-hero__avatar" onerror="this.src='/images/defaults/avatar.png'">
+      <h1 class="celebrity-hero__name">
+        <%= celebrity.stageName %>
+        <% if (celebrity.isVerified) { %><span title="Verified">✅</span><% } %>
+      </h1>
+      <div class="celebrity-hero__category"><%= celebrity.category %></div>
+    </div>
+  </section>
+
   <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
+    <div class="grid-2 gap-8">
+
+      <div>
+        <% if (celebrity.shortBio) { %><p style="font-size:var(--text-lg);color:var(--text-secondary);margin-bottom:var(--space-6);"><%= celebrity.shortBio %></p><% } %>
+
+        <% if (celebrity.biography) { %>
+        <div class="content-block mb-6">
+          <h3 style="margin-bottom:var(--space-4);">About</h3>
+          <p style="color:var(--text-secondary);line-height:1.8;white-space:pre-line;"><%= celebrity.biography %></p>
+        </div>
+        <% } %>
+
+        <% if (celebrity.achievements?.length) { %>
+        <div class="content-block mb-6">
+          <h3 style="margin-bottom:var(--space-4);">🏆 Achievements</h3>
+          <ul style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <% celebrity.achievements.forEach(a => { %><li style="color:var(--text-secondary);">✓ <%= a %></li><% }) %>
+          </ul>
+        </div>
+        <% } %>
+
+        <% if (celebrity.gallery?.length) { %>
+        <div class="content-block mb-6">
+          <h3 style="margin-bottom:var(--space-4);">📸 Gallery</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--space-3);">
+            <% celebrity.gallery.forEach(g => { %>
+            <img src="<%= g.url %>" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-md);">
+            <% }) %>
+          </div>
+        </div>
+        <% } %>
+
+        <div class="content-block mb-6">
+          <h3 style="margin-bottom:var(--space-5);">🎪 Upcoming Events</h3>
+          <% if (upcomingEvents.length === 0) { %>
+          <p style="color:var(--text-muted);text-align:center;padding:var(--space-8) 0;">No upcoming events right now. Check back soon!</p>
+          <% } else { %>
+          <div class="grid-2 gap-4">
+            <% upcomingEvents.forEach(event => { %>
+            <a href="/events/<%= event.slug %>" class="event-card" style="display:block;text-decoration:none;">
+              <div class="event-card__banner">
+                <img src="<%= event.banner?.url || '/images/defaults/event-banner.jpg' %>" class="event-card__banner-img" loading="lazy">
+                <div class="event-card__banner-overlay"></div>
+                <span class="event-card__type-badge <%= event.type %>"><%= event.type %></span>
+              </div>
+              <div class="event-card__body">
+                <div class="event-card__title"><%= event.title %></div>
+                <div class="event-card__meta">
+                  <div class="event-card__meta-item">📅 <%= new Date(event.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) %></div>
+                </div>
+              </div>
+              <div class="event-card__footer">
+                <div>
+                  <div class="event-card__price-label">From</div>
+                  <div class="event-card__price">$<%= Math.min(...event.ticketCategories.filter(c=>c.isActive).map(c=>c.price)) || 0 %></div>
+                </div>
+                <span class="btn btn-primary btn-sm">Get Tickets</span>
+              </div>
+            </a>
+            <% }) %>
+          </div>
+          <% } %>
+        </div>
+
+        <div class="content-block">
+          <div class="flex-between mb-5">
+            <h3>⭐ Fan Reviews</h3>
+            <% if (celebrity.averageRating > 0) { %>
+            <div style="display:flex;align-items:center;gap:var(--space-2);">
+              <div class="stars"><% for(let i=1;i<=5;i++){ %><span class="star <%= i <= Math.round(celebrity.averageRating) ? 'filled' : '' %>">★</span><% } %></div>
+              <span style="font-weight:700;"><%= celebrity.averageRating.toFixed(1) %></span>
+              <span style="color:var(--text-muted);font-size:var(--text-sm);">(<%= celebrity.totalReviews %>)</span>
+            </div>
+            <% } %>
+          </div>
+          <% if (reviews.length === 0) { %>
+          <p style="color:var(--text-muted);text-align:center;padding:var(--space-8) 0;">No reviews yet.</p>
+          <% } else { %>
+          <% reviews.forEach(r => { %>
+          <div style="padding:var(--space-4) 0;border-bottom:1px solid var(--border-subtle);">
+            <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2);">
+              <img src="<%= r.fan?.avatar?.url || '/images/defaults/avatar.png' %>" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+              <div>
+                <div style="font-weight:600;font-size:var(--text-sm);"><%= r.fan?.firstName %> <%= r.fan?.lastName %></div>
+                <div class="stars"><% for(let i=1;i<=5;i++){ %><span class="star <%= i <= r.rating ? 'filled' : '' %>">★</span><% } %></div>
+              </div>
+            </div>
+            <% if (r.title) { %><div style="font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-1);"><%= r.title %></div><% } %>
+            <p style="color:var(--text-secondary);font-size:var(--text-sm);"><%= r.content %></p>
+          </div>
+          <% }) %>
+          <% } %>
+        </div>
+      </div>
+
+      <div>
+        <div class="content-block mb-5">
+          <div style="display:flex;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">
+            <span style="font-size:var(--text-sm);color:var(--text-muted);">Total Fans</span>
+            <span style="font-weight:700;"><%= celebrity.totalFans.toLocaleString() %></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:var(--space-3) 0;">
+            <span style="font-size:var(--text-sm);color:var(--text-muted);">Events Hosted</span>
+            <span style="font-weight:700;"><%= celebrity.totalEvents %></span>
+          </div>
+        </div>
+
+        <% if (celebrity.socialLinks?.length) { %>
+        <div class="content-block mb-5">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Connect</h3>
+          <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <% celebrity.socialLinks.forEach(s => { %>
+            <a href="<%= s.url %>" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="text-transform:capitalize;justify-content:flex-start;">🔗 <%= s.platform %></a>
+            <% }) %>
+          </div>
+        </div>
+        <% } %>
+
+        <% if (celebrity.fanClub) { %>
+        <div class="content-block" style="text-align:center;">
+          <div style="font-size:36px;margin-bottom:var(--space-3);">⭐</div>
+          <h4 style="margin-bottom:var(--space-2);"><%= celebrity.fanClub.name %></h4>
+          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-4);"><%= celebrity.fanClub.memberCount %> members</p>
+          <% if (currentUser) { %>
+            <% if (isFanClubMember) { %>
+            <form action="/fan/fan-clubs/<%= celebrity.fanClub._id %>/leave" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-secondary btn-full">Leave Fan Club</button>
+            </form>
+            <% } else { %>
+            <form action="/fan/fan-clubs/<%= celebrity.fanClub._id %>/join" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-primary btn-full">Join Fan Club</button>
+            </form>
+            <% } %>
+          <% } else { %>
+          <a href="/auth/login" class="btn btn-primary btn-full">Login to Join</a>
+          <% } %>
+        </div>
+        <% } %>
+      </div>
+
+    </div>
   </div>
 </main>
 <%- include('../partials/footer') %>

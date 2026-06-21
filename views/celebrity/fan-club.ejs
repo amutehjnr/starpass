@@ -10,14 +10,120 @@
 <body>
 <%- include('../../partials/navbar') %>
 <%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <button class="btn btn-secondary btn-sm mb-6" id="sidebarToggle" style="display:none;">☰ Menu</button>
+
+    <div class="page-header">
+      <h1 class="page-title">Fan Club</h1>
+      <p class="page-subtitle">Engage your most dedicated fans</p>
+    </div>
+
+    <% if (!fanClub) { %>
+    <div class="content-block" style="max-width:520px;">
+      <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-2);">⭐ Create Your Fan Club</h3>
+      <p style="color:var(--text-muted);margin-bottom:var(--space-5);">Give your biggest supporters a home — share exclusive posts and updates.</p>
+      <form action="/celebrity/fan-club/create" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label class="form-label">Fan Club Name <span class="required">*</span></label>
+          <input type="text" name="name" class="form-input" required maxlength="100" placeholder="e.g. Star Nation">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-textarea" rows="4" maxlength="2000" placeholder="What's this fan club about?"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Create Fan Club</button>
+      </form>
+    </div>
+    <% } else { %>
+
+    <div class="content-block mb-6">
+      <div class="flex-between">
+        <div>
+          <h3 style="font-size:var(--text-xl);"><%= fanClub.name %></h3>
+          <p style="color:var(--text-muted);margin-top:var(--space-2);"><%= fanClub.description %></p>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:var(--text-2xl);font-weight:800;"><%= fanClub.memberCount %></div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted);">members</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Post -->
+    <div class="content-block mb-6">
+      <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">📝 New Post</h3>
+      <form action="/celebrity/fan-club/post" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Post Type</label>
+            <select name="type" class="form-select">
+              <option value="text">Text</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="announcement">Announcement</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <label class="form-check">
+              <input type="checkbox" name="isExclusive" class="form-check-input">
+              <span class="form-check-label">Exclusive to fan club members</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Content</label>
+          <textarea name="content" class="form-textarea" rows="3" maxlength="5000" placeholder="Share an update with your fans…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Media (optional)</label>
+          <input type="file" name="media" accept="image/*" multiple class="form-input">
+        </div>
+        <button type="submit" class="btn btn-primary">Post Update</button>
+      </form>
+    </div>
+
+    <!-- Posts Feed -->
+    <div class="content-block">
+      <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Recent Posts</h3>
+      <% if (posts.length === 0) { %>
+      <div style="text-align:center;padding:var(--space-10);color:var(--text-muted);">No posts yet.</div>
+      <% } else { %>
+      <% posts.forEach(post => { %>
+      <div style="padding:var(--space-5) 0;border-bottom:1px solid var(--border-subtle);">
+        <div class="flex-between mb-3">
+          <div style="display:flex;align-items:center;gap:var(--space-2);">
+            <% if (post.isPinned) { %><span title="Pinned">📌</span><% } %>
+            <span class="badge badge-<%= post.type === 'announcement' ? 'warning' : 'muted' %>" style="text-transform:capitalize;"><%= post.type %></span>
+            <% if (post.isExclusive) { %><span class="badge badge-brand">Exclusive</span><% } %>
+          </div>
+          <span style="font-size:var(--text-xs);color:var(--text-muted);"><%= new Date(post.createdAt).toLocaleDateString() %></span>
+        </div>
+        <p style="color:var(--text-secondary);line-height:1.7;margin-bottom:var(--space-3);"><%= post.content %></p>
+        <% if (post.media && post.media.length) { %>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:var(--space-2);margin-bottom:var(--space-3);">
+          <% post.media.forEach(m => { %>
+          <img src="<%= m.url %>" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-md);">
+          <% }) %>
+        </div>
+        <% } %>
+        <div style="font-size:var(--text-xs);color:var(--text-muted);">❤️ <%= post.likes?.length || 0 %> · 💬 <%= post.comments?.length || 0 %></div>
+      </div>
+      <% }) %>
+      <% } %>
+    </div>
+    <% } %>
+
+  </main>
+</div>
+
 <%- include('../../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

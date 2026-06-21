@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header flex-between">
+      <div>
+        <a href="/admin/celebrities" class="btn btn-ghost btn-sm mb-3">← Back to Celebrities</a>
+        <h1 class="page-title"><%= celebrity.stageName %></h1>
+        <p class="page-subtitle">Applied via <%= celebrity.applicationSource === 'admin_invited' ? 'admin invitation' : 'self-service application' %> · <%= new Date(celebrity.createdAt).toLocaleDateString() %></p>
+      </div>
+      <span class="badge badge-<%= celebrity.isVerified ? 'success' : 'warning' %>" style="font-size:var(--text-sm);padding:6px 16px;">
+        <%= celebrity.isVerified ? 'Verified' : 'Pending Review' %>
+      </span>
+    </div>
+
+    <div class="grid-2 gap-6">
+      <div>
+        <div class="content-block mb-5">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">👤 Account</h3>
+          <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-4);">
+            <img src="<%= celebrity.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:56px;height:56px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+            <div>
+              <div style="font-weight:700;"><%= celebrity.user?.firstName %> <%= celebrity.user?.lastName %></div>
+              <div style="font-size:var(--text-sm);color:var(--text-muted);"><%= celebrity.user?.email %></div>
+            </div>
+          </div>
+          <span class="badge badge-<%= celebrity.user?.isActive ? 'success' : 'muted' %>"><%= celebrity.user?.isActive ? 'Account Active' : 'Account Deactivated' %></span>
+        </div>
+
+        <div class="content-block mb-5">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Profile Details</h3>
+          <% [
+            ['Category', celebrity.category],
+            ['Short Bio', celebrity.shortBio || '–'],
+          ].forEach(([label, value]) => { %>
+          <div style="display:flex;justify-content:space-between;gap:var(--space-4);padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);text-transform:capitalize;">
+            <span style="font-size:var(--text-sm);color:var(--text-muted);flex-shrink:0;"><%= label %></span>
+            <span style="font-size:var(--text-sm);font-weight:600;text-align:right;"><%= value %></span>
+          </div>
+          <% }) %>
+          <% if (celebrity.biography) { %>
+          <div style="padding-top:var(--space-4);">
+            <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:var(--space-2);">Biography</div>
+            <p style="color:var(--text-secondary);line-height:1.7;font-size:var(--text-sm);"><%= celebrity.biography %></p>
+          </div>
+          <% } %>
+        </div>
+
+        <% if (celebrity.rejectionReason) { %>
+        <div class="alert alert-error">
+          <span class="alert__icon">❌</span>
+          <div class="alert__content"><strong>Previously rejected:</strong> <%= celebrity.rejectionReason %></div>
+        </div>
+        <% } %>
+      </div>
+
+      <div>
+        <div class="content-block mb-5">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">🖼️ Verification Documents</h3>
+          <% if (!celebrity.verificationDocuments?.length) { %>
+          <p style="color:var(--text-muted);font-size:var(--text-sm);">No documents were submitted (likely an admin-invited celebrity).</p>
+          <% } else { %>
+          <div class="review-card__images">
+            <% celebrity.verificationDocuments.forEach((doc) => { %>
+            <div class="review-card__img-wrap" onclick="openImage('<%= doc.url %>')">
+              <img src="<%= doc.url %>" alt="Verification document" class="review-card__img">
+            </div>
+            <% }) %>
+          </div>
+          <% } %>
+        </div>
+
+        <% if (!celebrity.isVerified) { %>
+        <div class="content-block mb-5" style="border-color:rgba(34,197,94,0.25);">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-3);color:var(--color-success);">✅ Approve</h3>
+          <form action="/admin/celebrities/<%= celebrity._id %>/verify" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-success btn-full" onclick="return confirm('Verify this celebrity? They will be notified by email.')">Approve & Verify</button>
+          </form>
+        </div>
+
+        <div class="content-block" style="border-color:rgba(239,68,68,0.25);">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-3);color:var(--color-error);">❌ Reject</h3>
+          <form action="/admin/celebrities/<%= celebrity._id %>/reject" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="form-group">
+              <label class="form-label">Reason <span class="required">*</span></label>
+              <textarea name="rejectionReason" class="form-textarea" rows="3" required placeholder="Why is this application being rejected?"></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger btn-full" onclick="return confirm('Reject this application? The account will be deactivated.')">Reject Application</button>
+          </form>
+        </div>
+        <% } else { %>
+        <div class="content-block" style="text-align:center;padding:var(--space-8);">
+          <div style="font-size:48px;margin-bottom:var(--space-4);">✅</div>
+          <h4 style="color:var(--color-success);">Verified</h4>
+          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-2);">Verified <%= celebrity.verifiedAt ? new Date(celebrity.verifiedAt).toLocaleDateString() : '' %></p>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="imgModal" onclick="closeImage()">
+  <div style="max-width:90vw;max-height:90vh;" onclick="event.stopPropagation()">
+    <img id="lightboxImg" style="max-width:90vw;max-height:90vh;border-radius:var(--radius-lg);object-fit:contain;" src="" alt="Document">
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+<script src="/js/app.js"></script>
+<script>
+function openImage(url){ document.getElementById('lightboxImg').src=url; document.getElementById('imgModal').classList.add('open'); }
+function closeImage(){ document.getElementById('imgModal').classList.remove('open'); }
+</script>
+</body>
+</html>

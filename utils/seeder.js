@@ -18,9 +18,9 @@ const seed = async () => {
     if (!existingSA) {
       await User.create({
         firstName: 'Super',
-        lastName: 'Admin',
-        email: process.env.SUPER_ADMIN_EMAIL || 'superadmin@starpass.com',
-        password: process.env.SUPER_ADMIN_PASSWORD || 'SuperAdmin@123!',
+        lastName: 'Toff',
+        email: process.env.SUPER_ADMIN_EMAIL || 'mustaeenms@gmail.com',
+        password: process.env.SUPER_ADMIN_PASSWORD || 'Mustaeen@121',
         role: 'super_admin',
         isActive: true,
         isEmailVerified: true,
@@ -29,11 +29,11 @@ const seed = async () => {
     }
 
     // ── Admin ──────────────────────────────────────────────────
-    let adminUser = await User.findOne({ email: 'admin@demo.com' });
+    let adminUser = await User.findOne({ email: 'emiliachris74@gmail.com' });
     if (!adminUser) {
       adminUser = await User.create({
         firstName: 'Admin', lastName: 'User',
-        email: 'admin@demo.com', password: 'Demo@1234',
+        email: 'emiliachris74@gmail.com', password: 'Mustaeen@121',
         role: 'admin', isActive: true, isEmailVerified: true,
       });
       logger.info('Admin user created.');
@@ -151,8 +151,8 @@ const seed = async () => {
 
     logger.info('✅ Seeding complete!');
     logger.info('Demo accounts:');
-    logger.info('  Super Admin: superadmin@starpass.com / SuperAdmin@123!');
-    logger.info('  Admin:       admin@demo.com / Demo@1234');
+    logger.info('  Super Admin: mustaeenms@gmail.com / SuperAdmin@123!');
+    logger.info('  Admin:       emiliachris74@gmail.com / Demo@1234');
     logger.info('  Fan:         fan@demo.com / Demo@1234');
     logger.info('  Celebrity:   celebrity@demo.com / Demo@1234');
 

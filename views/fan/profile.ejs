@@ -8,16 +8,82 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
-<%- include('../../partials/footer') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">My Profile</h1>
+      <p class="page-subtitle">Manage your account details</p>
+    </div>
+
+    <form action="/fan/profile" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="grid-2 gap-6">
+
+        <div>
+          <div class="content-block">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Avatar</h3>
+            <div style="text-align:center;margin-bottom:var(--space-5);">
+              <img src="<%= currentUser.avatar?.url || '/images/defaults/avatar.png' %>" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid var(--border-brand);" onerror="this.src='/images/defaults/avatar.png'">
+            </div>
+            <div class="upload-zone">
+              <input type="file" name="avatar" accept="image/*" class="upload-zone__input">
+              <div style="font-size:32px;margin-bottom:var(--space-2);">📷</div>
+              <div class="upload-zone__title">Change Avatar</div>
+              <img class="upload-zone__preview" style="display:none;max-height:160px;">
+            </div>
+          </div>
+
+          <div class="content-block mt-6">
+            <div style="display:flex;justify-content:space-between;padding:var(--space-2) 0;">
+              <span style="font-size:var(--text-sm);color:var(--text-muted);">Email</span>
+              <span style="font-size:var(--text-sm);font-weight:600;"><%= currentUser.email %></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:var(--space-2) 0;">
+              <span style="font-size:var(--text-sm);color:var(--text-muted);">Verified</span>
+              <span class="badge badge-<%= currentUser.isEmailVerified ? 'success' : 'warning' %>"><%= currentUser.isEmailVerified ? 'Yes' : 'No' %></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-block">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Name <span class="required">*</span></label>
+              <input type="text" name="firstName" class="form-input" value="<%= currentUser.firstName %>" required maxlength="50">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name <span class="required">*</span></label>
+              <input type="text" name="lastName" class="form-input" value="<%= currentUser.lastName %>" required maxlength="50">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" name="phone" class="form-input" value="<%= currentUser.phone || '' %>">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Country</label>
+            <input type="text" name="country" class="form-input" value="<%= currentUser.country || '' %>">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bio</label>
+            <textarea name="bio" class="form-textarea" rows="4" maxlength="500"><%= currentUser.bio || '' %></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full btn-lg">Save Changes</button>
+        </div>
+
+      </div>
+    </form>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

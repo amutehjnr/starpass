@@ -11,13 +11,60 @@
 <%- include('../partials/navbar') %>
 <%- include('../partials/flash') %>
 <main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
+  <section class="section">
+    <div class="container" style="max-width:760px;">
+      <div class="section-header">
+        <div class="section-label">❓ Help Center</div>
+        <h1 class="section-title">Frequently Asked Questions</h1>
+      </div>
+
+      <% const faqs = [
+        { q: 'How do I purchase a ticket?', a: "Browse events, select your ticket category, then submit a gift card as payment. Our team reviews submissions within 24 hours, after which your ticket is activated with a QR code." },
+        { q: 'What payment methods do you accept?', a: 'StarPass accepts gift cards (Amazon, Apple, Steam, Google Play, Visa, Mastercard, and others) as payment for tickets.' },
+        { q: 'How long does payment review take?', a: "Most submissions are reviewed within 24 hours. You'll receive a notification and email once your payment is approved or if more information is needed." },
+        { q: 'Can I get a refund?', a: "Refund eligibility depends on the event organizer's policy. If an event is cancelled, ticket holders are notified and refunded automatically." },
+        { q: 'How do I become a verified celebrity?', a: 'Sign up with a celebrity account, complete your profile, and our team will review your application. Verified celebrities can publish events and build a fan club.' },
+        { q: 'Is my payment information secure?', a: 'Yes. All submissions are encrypted and reviewed manually by our trained support team before any ticket is activated.' },
+      ]; %>
+
+      <div class="content-block" style="padding:0;">
+        <% faqs.forEach((faq, i) => { %>
+        <div style="border-bottom:<%= i === faqs.length - 1 ? 'none' : '1px solid var(--border-subtle)' %>;">
+          <button type="button" class="faq-toggle" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:var(--space-5);text-align:left;background:none;border:none;cursor:pointer;color:var(--text-primary);font-weight:600;">
+            <span><%= faq.q %></span>
+            <span class="faq-icon" style="transition:transform 0.2s;">▾</span>
+          </button>
+          <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 var(--space-5);">
+            <p style="color:var(--text-secondary);line-height:1.7;padding-bottom:var(--space-5);"><%= faq.a %></p>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+
+      <div class="content-block mt-6" style="text-align:center;">
+        <p style="color:var(--text-muted);margin-bottom:var(--space-4);">Still have questions?</p>
+        <a href="/contact" class="btn btn-primary">Contact Support</a>
+      </div>
+    </div>
+  </section>
 </main>
 <%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script>
+  document.querySelectorAll('.faq-toggle').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const answer = this.nextElementSibling;
+      const icon = this.querySelector('.faq-icon');
+      const isOpen = answer.classList.contains('open');
+      document.querySelectorAll('.faq-answer').forEach(a => { a.style.maxHeight = null; a.classList.remove('open'); });
+      document.querySelectorAll('.faq-icon').forEach(i => i.style.transform = 'rotate(0deg)');
+      if (!isOpen) {
+        answer.classList.add('open');
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+        icon.style.transform = 'rotate(180deg)';
+      }
+    });
+  });
+</script>
 </body>
 </html>

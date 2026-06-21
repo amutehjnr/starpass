@@ -8,16 +8,70 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
-<%- include('../../partials/footer') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">Moderate Reviews</h1>
+      <p class="page-subtitle"><%= pagination.total %> total reviews</p>
+    </div>
+
+    <div class="flex gap-2 mb-6">
+      <a href="/admin/reviews" class="btn btn-sm <%= filters.approved === undefined ? 'btn-primary' : 'btn-secondary' %>">All</a>
+      <a href="/admin/reviews?approved=false" class="btn btn-sm <%= filters.approved === 'false' ? 'btn-primary' : 'btn-secondary' %>">Pending</a>
+      <a href="/admin/reviews?approved=true" class="btn btn-sm <%= filters.approved === 'true' ? 'btn-primary' : 'btn-secondary' %>">Approved</a>
+    </div>
+
+    <% if (reviews.length === 0) { %>
+    <div class="content-block" style="text-align:center;padding:var(--space-16);color:var(--text-muted);">No reviews found.</div>
+    <% } else { %>
+    <% reviews.forEach(r => { %>
+    <div class="content-block mb-4">
+      <div class="flex-between mb-3">
+        <div>
+          <div style="font-weight:600;"><%= r.fan?.firstName %> <%= r.fan?.lastName %> <span style="color:var(--text-muted);font-weight:400;">on</span> <%= r.celebrity?.stageName %></div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted);"><%= r.event?.title %> · <%= new Date(r.createdAt).toLocaleDateString() %></div>
+        </div>
+        <div class="stars">
+          <% for (let i=1;i<=5;i++) { %><span class="star <%= i <= r.rating ? 'filled' : '' %>">★</span><% } %>
+        </div>
+      </div>
+      <% if (r.title) { %><div style="font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-2);"><%= r.title %></div><% } %>
+      <p style="color:var(--text-secondary);font-size:var(--text-sm);margin-bottom:var(--space-4);"><%= r.content %></p>
+      <div style="display:flex;gap:var(--space-2);align-items:center;">
+        <span class="badge badge-<%= r.isApproved ? 'success' : 'warning' %>"><%= r.isApproved ? 'Approved' : 'Pending' %></span>
+        <% if (!r.isApproved) { %>
+        <form action="/admin/reviews/<%= r._id %>/approve" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-success btn-sm">Approve</button>
+        </form>
+        <% } %>
+        <form action="/admin/reviews/<%= r._id %>/delete" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hide this review?')">Hide</button>
+        </form>
+      </div>
+    </div>
+    <% }) %>
+
+    <% if (pagination.pages > 1) { %>
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.pages; p++) { %>
+      <a href="/admin/reviews?page=<%= p %><%= filters.approved !== undefined ? '&approved=' + filters.approved : '' %>" class="pagination__btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+      <% } %>
+    </div>
+    <% } %>
+    <% } %>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

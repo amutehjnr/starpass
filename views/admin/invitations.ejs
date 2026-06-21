@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">Celebrity Invitations</h1>
+      <p class="page-subtitle">Invite celebrities directly — they'll claim their account and complete their profile</p>
+    </div>
+
+    <div class="content-block mb-6">
+      <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Send New Invitation</h3>
+      <form action="/admin/invitations" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email <span class="required">*</span></label>
+            <input type="email" name="email" class="form-input" required placeholder="celebrity@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stage Name <span class="required">*</span></label>
+            <input type="text" name="stageName" class="form-input" required maxlength="100">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Category <span class="required">*</span></label>
+            <select name="category" class="form-select" required>
+              <% ['actor','musician','athlete','comedian','influencer','model','gamer','chef','author','other'].forEach(cat => { %>
+              <option value="<%= cat %>"><%= cat.charAt(0).toUpperCase() + cat.slice(1) %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Internal Note (optional)</label>
+            <input type="text" name="note" class="form-input" placeholder="For your records only">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Send Invitation</button>
+      </form>
+    </div>
+
+    <div class="table-wrap content-block" style="padding:0;">
+      <table class="table">
+        <thead><tr><th>Stage Name</th><th>Email</th><th>Category</th><th>Status</th><th>Sent</th><th></th></tr></thead>
+        <tbody>
+          <% if (invitations.length === 0) { %>
+          <tr><td colspan="6" class="table__empty">No invitations sent yet.</td></tr>
+          <% } %>
+          <% invitations.forEach(inv => { %>
+          <tr>
+            <td style="font-weight:600;color:var(--text-primary);"><%= inv.stageName %></td>
+            <td style="font-size:var(--text-sm);"><%= inv.email %></td>
+            <td style="text-transform:capitalize;"><%= inv.category %></td>
+            <td>
+              <span class="badge badge-<%= inv.status === 'claimed' ? 'success' : inv.status === 'pending' ? 'warning' : inv.status === 'revoked' ? 'error' : 'muted' %>" style="text-transform:capitalize;">
+                <%= inv.status %>
+              </span>
+            </td>
+            <td style="font-size:var(--text-xs);color:var(--text-muted);"><%= new Date(inv.createdAt).toLocaleDateString() %></td>
+            <td>
+              <% if (inv.status === 'pending') { %>
+              <div style="display:flex;gap:6px;">
+                <form action="/admin/invitations/<%= inv._id %>/resend" method="POST">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-secondary btn-sm">Resend</button>
+                </form>
+                <form action="/admin/invitations/<%= inv._id %>/revoke" method="POST">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Revoke this invitation?')">Revoke</button>
+                </form>
+              </div>
+              <% } %>
+              <% if (inv.status === 'claimed' && inv.celebrity) { %>
+              <a href="/admin/celebrities/<%= inv.celebrity %>" class="btn btn-primary btn-sm">View Profile</a>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
+<script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

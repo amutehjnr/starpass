@@ -8,16 +8,104 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
-<%- include('../../partials/footer') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">My Reviews</h1>
+      <p class="page-subtitle">Share your experience with fellow fans</p>
+    </div>
+
+    <% if (pendingReviewEvents.length > 0) { %>
+    <div class="content-block mb-6">
+      <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">✍️ Events Awaiting Your Review</h3>
+      <div class="grid-3">
+        <% pendingReviewEvents.forEach(event => { %>
+        <div class="card">
+          <div class="card__body">
+            <img src="<%= event.banner?.url || '/images/defaults/event-banner.jpg' %>" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--radius-md);margin-bottom:var(--space-3);">
+            <div style="font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);"><%= event.title %></div>
+            <button type="button" class="btn btn-primary btn-sm btn-full" data-modal-open="reviewModal-<%= event._id %>">Write a Review</button>
+          </div>
+        </div>
+
+        <div class="modal-overlay" id="reviewModal-<%= event._id %>">
+          <div class="modal">
+            <div class="modal__header">
+              <h3 class="modal__title">Review: <%= event.title %></h3>
+              <button type="button" class="modal__close" data-modal-close="reviewModal-<%= event._id %>">✕</button>
+            </div>
+            <form action="/fan/reviews" method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="eventId" value="<%= event._id %>">
+              <div class="modal__body">
+                <div class="form-group">
+                  <label class="form-label">Your Rating <span class="required">*</span></label>
+                  <div class="stars stars-interactive" data-rating="0">
+                    <% for (let i=0;i<5;i++) { %><span class="star">★</span><% } %>
+                    <input type="hidden" name="rating">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Title</label>
+                  <input type="text" name="title" class="form-input" maxlength="200" placeholder="Summarize your experience">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Review</label>
+                  <textarea name="content" class="form-textarea" rows="4" maxlength="3000" placeholder="Tell other fans about your experience…"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Photos (optional)</label>
+                  <input type="file" name="photos" accept="image/*" multiple class="form-input">
+                </div>
+              </div>
+              <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" data-modal-close="reviewModal-<%= event._id %>">Cancel</button>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="content-block">
+      <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Submitted Reviews</h3>
+      <% if (reviews.length === 0) { %>
+      <div style="text-align:center;padding:var(--space-10);color:var(--text-muted);">You haven't reviewed any events yet.</div>
+      <% } else { %>
+      <% reviews.forEach(r => { %>
+      <div style="padding:var(--space-5) 0;border-bottom:1px solid var(--border-subtle);">
+        <div class="flex-between mb-2">
+          <div style="display:flex;align-items:center;gap:var(--space-3);">
+            <img src="<%= r.celebrity?.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+            <div>
+              <div style="font-weight:600;font-size:var(--text-sm);"><%= r.event?.title %></div>
+              <div class="stars">
+                <% for (let i=1;i<=5;i++) { %><span class="star <%= i <= r.rating ? 'filled' : '' %>">★</span><% } %>
+              </div>
+            </div>
+          </div>
+          <span class="badge badge-<%= r.isApproved ? 'success' : 'warning' %>"><%= r.isApproved ? 'Published' : 'Pending' %></span>
+        </div>
+        <% if (r.title) { %><div style="font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-2);"><%= r.title %></div><% } %>
+        <p style="color:var(--text-secondary);font-size:var(--text-sm);"><%= r.content %></p>
+      </div>
+      <% }) %>
+      <% } %>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

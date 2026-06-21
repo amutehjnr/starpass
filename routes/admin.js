@@ -45,5 +45,14 @@ router.post('/checkin', ctrl.postCheckin);
 
 // Audit Logs
 router.get('/audit-logs', requireRole('admin', 'super_admin'), ctrl.getAuditLogs);
+// Celebrity detail / review / reject
+router.get('/celebrities/:id', ctrl.getCelebrityDetail);
+router.post('/celebrities/:id/reject', requireRole('admin', 'super_admin'), audit('admin:celebrity_reject', 'Celebrity'), ctrl.rejectCelebrity);
+
+// Invitations
+router.get('/invitations', requireRole('admin', 'super_admin'), ctrl.getInvitations);
+router.post('/invitations', requireRole('admin', 'super_admin'), audit('admin:invitation_create', 'Invitation'), ctrl.postCreateInvitation);
+router.post('/invitations/:id/revoke', requireRole('admin', 'super_admin'), audit('admin:invitation_revoke', 'Invitation'), ctrl.postRevokeInvitation);
+router.post('/invitations/:id/resend', requireRole('admin', 'super_admin'), audit('admin:invitation_resend', 'Invitation'), ctrl.postResendInvitation);
 
 module.exports = router;

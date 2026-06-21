@@ -10,14 +10,82 @@
 <body>
 <%- include('../../partials/navbar') %>
 <%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <button class="btn btn-secondary btn-sm mb-6" id="sidebarToggle" style="display:none;">☰ Menu</button>
+
+    <div class="page-header flex-between">
+      <div>
+        <h1 class="page-title">My Events</h1>
+        <p class="page-subtitle"><%= pagination.total %> total events</p>
+      </div>
+      <a href="/celebrity/events/create" class="btn btn-primary">+ Create Event</a>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="flex gap-2 mb-6" style="flex-wrap:wrap;">
+      <% ['all','draft','published','postponed','cancelled','completed'].forEach(s => { %>
+      <a href="/celebrity/events<%= s === 'all' ? '' : '?status=' + s %>"
+         class="btn btn-sm <%= currentStatus === s ? 'btn-primary' : 'btn-secondary' %>" style="text-transform:capitalize;">
+        <%= s %>
+      </a>
+      <% }) %>
+    </div>
+
+    <% if (events.length === 0) { %>
+    <div class="content-block" style="text-align:center;padding:var(--space-16);">
+      <div style="font-size:64px;margin-bottom:var(--space-4);">🎪</div>
+      <h4 style="margin-bottom:var(--space-3);">No events found</h4>
+      <p style="color:var(--text-muted);margin-bottom:var(--space-6);">Create your first event to start selling tickets.</p>
+      <a href="/celebrity/events/create" class="btn btn-primary">+ Create Event</a>
+    </div>
+    <% } else { %>
+    <div class="table-wrap content-block" style="padding:0;">
+      <table class="table">
+        <thead>
+          <tr><th>Event</th><th>Type</th><th>Date</th><th>Status</th><th>Sold</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% events.forEach(event => { %>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:var(--space-3);">
+                <img src="<%= event.banner?.url || '/images/defaults/event-banner.jpg' %>" style="width:44px;height:44px;border-radius:var(--radius-sm);object-fit:cover;flex-shrink:0;">
+                <span style="font-weight:600;color:var(--text-primary);"><%= event.title %></span>
+              </div>
+            </td>
+            <td style="text-transform:capitalize;"><%= event.type %></td>
+            <td><%= new Date(event.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) %></td>
+            <td>
+              <span class="badge badge-<%= event.status === 'published' ? 'success' : event.status === 'draft' ? 'muted' : event.status === 'cancelled' ? 'error' : event.status === 'postponed' ? 'warning' : 'info' %>" style="text-transform:capitalize;">
+                <%= event.status %>
+              </span>
+            </td>
+            <td><%= event.totalSold %>/<%= event.totalCapacity %></td>
+            <td><a href="/celebrity/events/<%= event._id %>/edit" class="btn btn-secondary btn-sm">Manage</a></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (pagination.pages > 1) { %>
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.pages; p++) { %>
+      <a href="/celebrity/events?page=<%= p %><%= currentStatus !== 'all' ? '&status=' + currentStatus : '' %>" class="pagination__btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+      <% } %>
+    </div>
+    <% } %>
+    <% } %>
+
+  </main>
+</div>
+
 <%- include('../../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

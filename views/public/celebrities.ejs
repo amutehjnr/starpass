@@ -11,11 +11,81 @@
 <%- include('../partials/navbar') %>
 <%- include('../partials/flash') %>
 <main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">⭐ Discover</div>
+        <h1 class="section-title">Browse Celebrities</h1>
+        <p class="section-subtitle"><%= pagination.total %> verified celebrities ready to meet their fans</p>
+      </div>
+
+      <form method="GET" action="/celebrities" class="content-block mb-8">
+        <div class="form-row" style="grid-template-columns:2fr 1fr 1fr auto;align-items:end;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Search</label>
+            <input type="text" name="search" class="form-input" value="<%= filters.search || '' %>" placeholder="Search by name, bio, tags…">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+              <option value="">All Categories</option>
+              <% categories.forEach(cat => { %>
+              <option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= cat.charAt(0).toUpperCase() + cat.slice(1) %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Sort By</label>
+            <select name="sort" class="form-select">
+              <option value="featured" <%= filters.sort === 'featured' ? 'selected' : '' %>>Featured</option>
+              <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Top Rated</option>
+              <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest</option>
+              <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+      </form>
+
+      <% if (celebrities.length === 0) { %>
+      <div style="text-align:center;padding:var(--space-20);">
+        <div style="font-size:64px;margin-bottom:var(--space-4);">🔍</div>
+        <h4 style="margin-bottom:var(--space-3);">No celebrities found</h4>
+        <p style="color:var(--text-muted);">Try adjusting your search or filters.</p>
+      </div>
+      <% } else { %>
+      <div class="grid-auto">
+        <% celebrities.forEach(celeb => { %>
+        <a href="/celebrities/<%= celeb.slug %>" class="celebrity-card hover-lift" style="display:block;">
+          <div class="celebrity-card__img-wrap">
+            <img src="<%= celeb.profileImage?.url || '/images/defaults/avatar.png' %>" alt="<%= celeb.stageName %>" class="celebrity-card__img" loading="lazy" onerror="this.src='/images/defaults/avatar.png'">
+            <div class="celebrity-card__overlay"></div>
+            <% if (celeb.isFeatured) { %><span class="event-card__featured-badge">⭐ Featured</span><% } %>
+          </div>
+          <div class="celebrity-card__body">
+            <div class="celebrity-card__name">
+              <%= celeb.stageName %>
+              <% if (celeb.isVerified) { %><span title="Verified">✅</span><% } %>
+            </div>
+            <div class="celebrity-card__category"><%= celeb.category %></div>
+            <% if (celeb.averageRating > 0) { %>
+            <div class="celebrity-card__rating">⭐ <%= celeb.averageRating.toFixed(1) %> <span style="color:var(--text-muted)">(<%= celeb.totalReviews %>)</span></div>
+            <% } %>
+          </div>
+        </a>
+        <% }) %>
+      </div>
+
+      <% if (pagination.pages > 1) { %>
+      <div class="pagination">
+        <% for (let p = 1; p <= pagination.pages; p++) { %>
+        <a href="/celebrities?page=<%= p %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.category ? '&category=' + filters.category : '' %><%= filters.sort ? '&sort=' + filters.sort : '' %>" class="pagination__btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+        <% } %>
+      </div>
+      <% } %>
+      <% } %>
+    </div>
+  </section>
 </main>
 <%- include('../partials/footer') %>
 <script src="/js/app.js"></script>

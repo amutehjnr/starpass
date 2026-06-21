@@ -5,16 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title><%= title %></title>
   <link rel="stylesheet" href="/css/style.css">
-  <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
 <%- include('../partials/navbar') %>
-<%- include('../partials/flash') %>
 <main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
+  <div style="min-height:80vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:var(--space-12) var(--space-6);">
+    <div>
+      <div style="font-size:100px;line-height:1;margin-bottom:var(--space-6);">⚠️</div>
+      <h1 style="font-size:clamp(48px,8vw,80px);font-weight:900;background:var(--gradient-brand);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:var(--space-4);"><%= statusCode %></h1>
+      <h2 style="font-size:var(--text-2xl);font-weight:700;margin-bottom:var(--space-4);">Something Went Wrong</h2>
+      <p style="color:var(--text-muted);max-width:440px;margin:0 auto var(--space-8);"><%= message %></p>
+      <div style="display:flex;gap:var(--space-4);justify-content:center;flex-wrap:wrap;">
+        <a href="/" class="btn btn-primary btn-lg">Go Home</a>
+        <a href="/contact" class="btn btn-secondary btn-lg">Contact Support</a>
+      </div>
+    </div>
   </div>
 </main>
 <%- include('../partials/footer') %>

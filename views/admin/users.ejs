@@ -8,16 +8,102 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
-<%- include('../../partials/footer') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">Manage Users</h1>
+      <p class="page-subtitle"><%= pagination.total %> total users</p>
+    </div>
+
+    <form method="GET" action="/admin/users" class="content-block mb-6">
+      <div class="form-row" style="grid-template-columns:2fr 1fr 1fr auto;align-items:end;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Search</label>
+          <input type="text" name="search" class="form-input" value="<%= filters.search || '' %>" placeholder="Name or email…">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Role</label>
+          <select name="role" class="form-select">
+            <option value="">All Roles</option>
+            <% ['fan','celebrity','celebrity_manager','event_organizer','moderator','admin','super_admin'].forEach(r => { %>
+            <option value="<%= r %>" <%= filters.role === r ? 'selected' : '' %>><%= r.replace('_',' ') %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select">
+            <option value="">All</option>
+            <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Filter</button>
+      </div>
+    </form>
+
+    <div class="table-wrap content-block" style="padding:0;">
+      <table class="table">
+        <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+        <tbody>
+          <% users.forEach(u => { %>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:var(--space-3);">
+                <img src="<%= u.avatar?.url || '/images/defaults/avatar.png' %>" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+                <div>
+                  <div style="font-weight:600;color:var(--text-primary);"><%= u.firstName %> <%= u.lastName %></div>
+                  <div style="font-size:var(--text-xs);color:var(--text-muted);"><%= u.email %></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <form action="/admin/users/<%= u._id %>/role" method="POST" style="display:flex;gap:6px;align-items:center;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <select name="role" class="form-select" style="padding:4px 24px 4px 8px;font-size:var(--text-xs);" onchange="this.form.submit()" <%= u.role === 'super_admin' ? 'disabled' : '' %>>
+                  <% ['fan','celebrity','celebrity_manager','event_organizer','moderator','admin'].forEach(r => { %>
+                  <option value="<%= r %>" <%= u.role === r ? 'selected' : '' %>><%= r.replace('_',' ') %></option>
+                  <% }) %>
+                  <% if (u.role === 'super_admin') { %><option value="super_admin" selected>super admin</option><% } %>
+                </select>
+              </form>
+            </td>
+            <td><span class="badge badge-<%= u.isActive ? 'success' : 'muted' %>"><%= u.isActive ? 'Active' : 'Inactive' %></span></td>
+            <td style="font-size:var(--text-sm);color:var(--text-muted);"><%= new Date(u.createdAt).toLocaleDateString() %></td>
+            <td>
+              <% if (u.role !== 'super_admin') { %>
+              <form action="/admin/users/<%= u._id %>/toggle-status" method="POST" style="display:inline;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-sm <%= u.isActive ? 'btn-danger' : 'btn-success' %>" onclick="return confirm('<%= u.isActive ? 'Deactivate' : 'Activate' %> this user?')">
+                  <%= u.isActive ? 'Deactivate' : 'Activate' %>
+                </button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (pagination.pages > 1) { %>
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.pages; p++) { %>
+      <a href="/admin/users?page=<%= p %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.role ? '&role=' + filters.role : '' %><%= filters.status ? '&status=' + filters.status : '' %>" class="pagination__btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+      <% } %>
+    </div>
+    <% } %>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

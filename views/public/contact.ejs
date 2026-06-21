@@ -11,11 +11,32 @@
 <%- include('../partials/navbar') %>
 <%- include('../partials/flash') %>
 <main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
+  <section class="section">
+    <div class="container" style="max-width:600px;">
+      <div class="section-header">
+        <div class="section-label">💬 Get In Touch</div>
+        <h1 class="section-title">Contact Us</h1>
+        <p class="section-subtitle">Questions about an event, payment, or your account? We're here to help.</p>
+      </div>
+
+      <div class="content-block mb-6" style="text-align:center;">
+        <div style="font-size:40px;margin-bottom:var(--space-4);">✉️</div>
+        <p style="color:var(--text-secondary);margin-bottom:var(--space-5);">Reach our support team directly and we'll get back to you within 24 hours.</p>
+        <a href="mailto:support@starpass.com" class="btn btn-primary btn-lg">support@starpass.com</a>
+      </div>
+
+      <div class="grid-2 gap-4">
+        <a href="/faq" class="card hover-lift" style="display:block;padding:var(--space-6);text-align:center;text-decoration:none;">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">❓</div>
+          <div style="font-weight:600;">Visit our FAQ</div>
+        </a>
+        <a href="/fan/payments" class="card hover-lift" style="display:block;padding:var(--space-6);text-align:center;text-decoration:none;">
+          <div style="font-size:32px;margin-bottom:var(--space-3);">💳</div>
+          <div style="font-weight:600;">Payment Status</div>
+        </a>
+      </div>
+    </div>
+  </section>
 </main>
 <%- include('../partials/footer') %>
 <script src="/js/app.js"></script>

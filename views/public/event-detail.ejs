@@ -11,10 +11,116 @@
 <%- include('../partials/navbar') %>
 <%- include('../partials/flash') %>
 <main>
+  <section class="event-hero">
+    <img src="<%= event.banner?.url || '/images/defaults/event-banner.jpg' %>" alt="<%= event.title %>" class="event-hero__img">
+    <div class="event-hero__overlay"></div>
+    <div class="event-hero__content">
+      <span class="event-card__type-badge <%= event.type %>" style="position:static;display:inline-block;margin-bottom:var(--space-4);"><%= event.type %></span>
+      <h1 style="font-size:clamp(var(--text-2xl),5vw,var(--text-4xl));font-weight:800;color:#fff;margin-bottom:var(--space-3);"><%= event.title %></h1>
+      <% if (event.celebrity) { %>
+      <a href="/celebrities/<%= event.celebrity.slug %>" style="display:inline-flex;align-items:center;gap:var(--space-2);text-decoration:none;color:#fff;">
+        <img src="<%= event.celebrity.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+        <span style="font-weight:600;"><%= event.celebrity.stageName %></span>
+        <% if (event.celebrity.isVerified) { %>✅<% } %>
+      </a>
+      <% } %>
+    </div>
+  </section>
+
   <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
+    <div class="grid-2 gap-8">
+
+      <div>
+        <div class="content-block mb-6">
+          <h3 style="margin-bottom:var(--space-4);">About This Event</h3>
+          <p style="color:var(--text-secondary);line-height:1.8;white-space:pre-line;"><%= event.description %></p>
+        </div>
+
+        <div class="content-block mb-6">
+          <h3 style="margin-bottom:var(--space-4);">Details</h3>
+          <% [
+            ['Date', new Date(event.startDate).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})],
+            ['Time', new Date(event.startDate).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})],
+            ['Venue', event.venue?.name || (event.type === 'virtual' ? 'Virtual Event' : 'TBA')],
+            ['Category', (event.category || '').replace(/_/g,' ')],
+          ].forEach(([label,value]) => { %>
+          <div style="display:flex;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);text-transform:capitalize;">
+            <span style="font-size:var(--text-sm);color:var(--text-muted);"><%= label %></span>
+            <span style="font-size:var(--text-sm);font-weight:600;"><%= value %></span>
+          </div>
+          <% }) %>
+        </div>
+
+        <% if (event.rulesAndGuidelines?.length) { %>
+        <div class="content-block mb-6">
+          <h3 style="margin-bottom:var(--space-4);">📋 Rules & Guidelines</h3>
+          <ul style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <% event.rulesAndGuidelines.forEach(rule => { %><li style="color:var(--text-secondary);font-size:var(--text-sm);">• <%= rule %></li><% }) %>
+          </ul>
+        </div>
+        <% } %>
+
+        <div class="content-block">
+          <h3 style="margin-bottom:var(--space-5);">⭐ Reviews</h3>
+          <% if (reviews.length === 0) { %>
+          <p style="color:var(--text-muted);text-align:center;padding:var(--space-8) 0;">No reviews yet for this event.</p>
+          <% } else { %>
+          <% reviews.forEach(r => { %>
+          <div style="padding:var(--space-4) 0;border-bottom:1px solid var(--border-subtle);">
+            <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2);">
+              <img src="<%= r.fan?.avatar?.url || '/images/defaults/avatar.png' %>" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+              <div>
+                <div style="font-weight:600;font-size:var(--text-sm);"><%= r.fan?.firstName %> <%= r.fan?.lastName %></div>
+                <div class="stars"><% for(let i=1;i<=5;i++){ %><span class="star <%= i <= r.rating ? 'filled' : '' %>">★</span><% } %></div>
+              </div>
+            </div>
+            <% if (r.title) { %><div style="font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-1);"><%= r.title %></div><% } %>
+            <p style="color:var(--text-secondary);font-size:var(--text-sm);"><%= r.content %></p>
+          </div>
+          <% }) %>
+          <% } %>
+        </div>
+      </div>
+
+      <div>
+        <div class="content-block" style="position:sticky;top:calc(var(--navbar-height) + var(--space-6));">
+          <h3 style="margin-bottom:var(--space-5);">Tickets</h3>
+          <% event.ticketCategories.filter(c => c.isActive).forEach(cat => { %>
+          <div style="display:flex;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">
+            <span style="font-size:var(--text-sm);"><%= cat.label %></span>
+            <span style="font-weight:700;">$<%= cat.price %></span>
+          </div>
+          <% }) %>
+
+          <% if (userTicket) { %>
+          <a href="/fan/tickets/<%= userTicket._id %>" class="btn btn-secondary btn-full btn-lg mt-6">View Your Ticket</a>
+          <% } else if (event.startDate < new Date()) { %>
+          <button class="btn btn-secondary btn-full btn-lg mt-6" disabled>Event Has Passed</button>
+          <% } else if (!currentUser) { %>
+          <a href="/auth/login?redirect=/fan/purchase/<%= event._id %>" class="btn btn-primary btn-full btn-lg mt-6">Login to Get Tickets</a>
+          <% } else { %>
+          <a href="/fan/purchase/<%= event._id %>" class="btn btn-primary btn-full btn-lg mt-6">Get Tickets</a>
+          <% } %>
+
+          <div style="margin-top:var(--space-5);">
+            <div class="event-card__cap-bar" style="width:100%;height:6px;">
+              <div class="event-card__cap-fill" style="width:<%= event.totalCapacity > 0 ? Math.min(100,(event.totalSold/event.totalCapacity)*100) : 0 %>%;"></div>
+            </div>
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-2);"><%= event.totalSold %> of <%= event.totalCapacity %> tickets sold</div>
+          </div>
+        </div>
+
+        <% if (event.celebrity?.fanClub) { %>
+        <div class="content-block mt-5" style="text-align:center;">
+          <div style="font-size:32px;margin-bottom:var(--space-2);">⭐</div>
+          <h4 style="margin-bottom:var(--space-2);"><%= event.celebrity.fanClub.name %></h4>
+          <p style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-4);"><%= event.celebrity.fanClub.memberCount %> members</p>
+          <a href="/celebrities/<%= event.celebrity.slug %>" class="btn btn-secondary btn-full btn-sm">View Celebrity</a>
+        </div>
+        <% } %>
+      </div>
+
+    </div>
   </div>
 </main>
 <%- include('../partials/footer') %>

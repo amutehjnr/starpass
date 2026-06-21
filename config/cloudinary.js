@@ -60,6 +60,12 @@ const uploadGiftCard = multer({
   fileFilter: fileFilter(ALLOWED_IMAGE_TYPES),
 });
 
+const uploadVerificationDoc = multer({
+  storage: createStorage('verification-docs', 'image', [{ quality: 'auto' }]),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: fileFilter(ALLOWED_IMAGE_TYPES),
+});
+
 const uploadVideo = multer({
   storage: createStorage('videos', 'video'),
   limits: { fileSize: 100 * 1024 * 1024 },
@@ -82,4 +88,5 @@ module.exports = {
   uploadGiftCard,
   uploadVideo,
   deleteFile,
+  uploadVerificationDoc,
 };

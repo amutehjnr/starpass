@@ -8,16 +8,84 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
 <main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
+  <div class="container section" style="max-width:640px;">
+    <h1 class="page-title mb-2">Submit Payment</h1>
+    <p class="page-subtitle mb-8">For <%= ticket.event?.title %> — <%= ticket.ticketLabel || ticket.ticketCategory %> ($<%= ticket.price %>)</p>
+
+    <div class="alert alert-info mb-6">
+      <span class="alert__icon">ℹ️</span>
+      <div class="alert__content">Submit a gift card matching or exceeding the ticket price. Our team reviews submissions within 24 hours.</div>
+    </div>
+
+    <form action="/fan/payments/upload" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="ticketId" value="<%= ticket._id %>">
+
+      <div class="content-block">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Card Type <span class="required">*</span></label>
+            <select name="cardType" class="form-select" required>
+              <% ['amazon','apple','steam','google_play','visa','mastercard','other'].forEach(t => { %>
+              <option value="<%= t %>"><%= t.replace('_',' ').replace(/\b\w/g, l => l.toUpperCase()) %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Card Value (USD) <span class="required">*</span></label>
+            <div class="input-group">
+              <span class="input-group-prefix">$</span>
+              <input type="number" name="declaredValue" class="form-input" min="<%= ticket.price %>" step="0.01" value="<%= ticket.price %>" required>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Card Number (optional)</label>
+          <input type="text" name="cardNumber" class="form-input" maxlength="30" placeholder="Last 4 digits or full code">
+        </div>
+      </div>
+
+      <div class="content-block mt-5">
+        <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Upload Images</h3>
+        <div class="form-group">
+          <label class="form-label">Front of Card <span class="required">*</span></label>
+          <div class="upload-zone">
+            <input type="file" name="front" accept="image/*" class="upload-zone__input" required>
+            <div style="font-size:32px;margin-bottom:var(--space-2);">📷</div>
+            <div class="upload-zone__title">Upload Front</div>
+            <img class="upload-zone__preview" style="display:none;max-height:160px;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Back of Card</label>
+          <div class="upload-zone">
+            <input type="file" name="back" accept="image/*" class="upload-zone__input">
+            <div style="font-size:32px;margin-bottom:var(--space-2);">📷</div>
+            <div class="upload-zone__title">Upload Back</div>
+            <img class="upload-zone__preview" style="display:none;max-height:160px;">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Receipt (optional)</label>
+          <div class="upload-zone">
+            <input type="file" name="receipt" accept="image/*" class="upload-zone__input">
+            <div style="font-size:32px;margin-bottom:var(--space-2);">🧾</div>
+            <div class="upload-zone__title">Upload Receipt</div>
+            <img class="upload-zone__preview" style="display:none;max-height:160px;">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg mt-6">Submit for Review</button>
+    </form>
   </div>
 </main>
-<%- include('../../partials/footer') %>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
 </body>
 </html>

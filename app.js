@@ -17,6 +17,7 @@ const logger = require('./config/logger');
 const { csrfMiddleware, csrfToken } = require('./middleware/csrf');
 const { globalErrorHandler } = require('./middleware/errorHandler');
 const { attachUser } = require('./middleware/auth');
+const onboardingRoutes = require('./routes/onboarding')
 
 // Route imports
 const publicRoutes = require('./routes/public');
@@ -146,6 +147,7 @@ app.use('/fan', fanRoutes);
 app.use('/celebrity', celebrityRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/v1', apiRoutes);
+app.use('/', onboardingRoutes);
 
 // ─── 404 ─────────────────────────────────────────────────────────────────────
 app.use((req, res) => {

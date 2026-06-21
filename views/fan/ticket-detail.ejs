@@ -8,16 +8,84 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
-<%- include('../../partials/footer') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <a href="/fan/tickets" class="btn btn-ghost btn-sm mb-6">← Back to Tickets</a>
+
+    <div class="grid-2 gap-6">
+      <div>
+        <div class="ticket-card ticket-<%= ticket.ticketCategory %>">
+          <div class="ticket-card__header">
+            <div>
+              <div class="ticket-card__event"><%= ticket.event?.title %></div>
+              <div class="ticket-card__number"># <%= ticket.ticketNumber %></div>
+            </div>
+            <span class="badge badge-<%= ticket.status === 'active' ? 'success' : ticket.status === 'pending_payment' ? 'warning' : ticket.status === 'used' ? 'info' : 'error' %>" style="text-transform:capitalize;">
+              <%= ticket.status.replace('_',' ') %>
+            </span>
+          </div>
+          <div class="ticket-card__body">
+            <div class="ticket-card__row"><span class="ticket-card__label">Celebrity</span><span class="ticket-card__value"><%= ticket.celebrity?.stageName %></span></div>
+            <div class="ticket-card__row"><span class="ticket-card__label">Date</span><span class="ticket-card__value"><%= new Date(ticket.event.startDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}) %></span></div>
+            <div class="ticket-card__row"><span class="ticket-card__label">Time</span><span class="ticket-card__value"><%= new Date(ticket.event.startDate).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) %></span></div>
+            <div class="ticket-card__row"><span class="ticket-card__label">Venue</span><span class="ticket-card__value"><%= ticket.event.venue?.name || (ticket.event.type === 'virtual' ? 'Virtual Event' : 'TBA') %></span></div>
+            <div class="ticket-card__row"><span class="ticket-card__label">Category</span><span class="ticket-card__value" style="text-transform:capitalize;"><%= ticket.ticketLabel || ticket.ticketCategory %></span></div>
+            <div class="ticket-card__row"><span class="ticket-card__label">Price</span><span class="ticket-card__value">$<%= ticket.price %></span></div>
+
+            <% if (ticket.status === 'active' && ticket.qrCode?.data) { %>
+            <div class="ticket-card__divider">
+              <div class="ticket-card__divider-line"></div>
+              <div class="ticket-card__divider-circle"></div>
+              <div class="ticket-card__divider-line"></div>
+            </div>
+            <div class="ticket-card__qr">
+              <img src="<%= ticket.qrCode.data %>" alt="QR Code">
+            </div>
+            <div style="text-align:center;font-size:var(--text-xs);color:var(--text-muted);font-family:var(--font-mono);">
+              <%= ticket.qrCode.verificationCode %>
+            </div>
+            <% } %>
+          </div>
+        </div>
+
+        <% if (ticket.status === 'active') { %>
+        <a href="/fan/tickets/<%= ticket._id %>/download" class="btn btn-primary btn-full btn-lg mt-6">⬇️ Download PDF Ticket</a>
+        <% } %>
+        <% if (ticket.status === 'pending_payment') { %>
+        <a href="/fan/payments/upload/<%= ticket._id %>" class="btn btn-primary btn-full btn-lg mt-6">💳 Submit Payment</a>
+        <% } %>
+      </div>
+
+      <div>
+        <div class="content-block">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">About <%= ticket.celebrity?.stageName %></h3>
+          <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-4);">
+            <img src="<%= ticket.celebrity?.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:56px;height:56px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+            <div>
+              <div style="font-weight:700;"><%= ticket.celebrity?.stageName %></div>
+              <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:capitalize;"><%= ticket.celebrity?.category %></div>
+            </div>
+          </div>
+          <a href="/celebrities/<%= ticket.celebrity?.slug %>" class="btn btn-secondary btn-full btn-sm">View Profile</a>
+        </div>
+
+        <div class="content-block mt-5">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Event Details</h3>
+          <p style="color:var(--text-secondary);line-height:1.7;"><%= ticket.event?.shortDescription || ticket.event?.description %></p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

@@ -11,11 +11,52 @@
 <%- include('../partials/navbar') %>
 <%- include('../partials/flash') %>
 <main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">⭐ Community</div>
+        <h1 class="section-title">Fan Clubs</h1>
+        <p class="section-subtitle">Join exclusive communities for your favorite celebrities</p>
+      </div>
+
+      <% if (fanClubs.length === 0) { %>
+      <div style="text-align:center;padding:var(--space-20);color:var(--text-muted);">No fan clubs available yet.</div>
+      <% } else { %>
+      <div class="grid-3">
+        <% fanClubs.forEach(fc => { %>
+        <div class="card hover-lift">
+          <div style="aspect-ratio:16/9;overflow:hidden;background:var(--bg-elevated);">
+            <img src="<%= fc.coverImage?.url || '/images/defaults/event-banner.jpg' %>" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div class="card__body">
+            <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3);">
+              <img src="<%= fc.celebrity?.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+              <div>
+                <div style="font-weight:600;font-size:var(--text-sm);"><%= fc.celebrity?.stageName %></div>
+                <div style="font-size:var(--text-xs);color:var(--text-muted);text-transform:capitalize;"><%= fc.celebrity?.category %></div>
+              </div>
+            </div>
+            <h4 style="margin-bottom:var(--space-2);"><%= fc.name %></h4>
+            <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-4);" class="line-clamp-2"><%= fc.description %></p>
+            <div class="flex-between">
+              <span style="font-size:var(--text-xs);color:var(--text-muted);"><%= fc.memberCount.toLocaleString() %> members</span>
+              <a href="/celebrities/<%= fc.celebrity?.slug %>" class="btn btn-primary btn-sm">View</a>
+            </div>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+
+      <% if (pagination.pages > 1) { %>
+      <div class="pagination">
+        <% for (let p = 1; p <= pagination.pages; p++) { %>
+        <a href="/fan-clubs?page=<%= p %>" class="pagination__btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+        <% } %>
+      </div>
+      <% } %>
+      <% } %>
+    </div>
+  </section>
 </main>
 <%- include('../partials/footer') %>
 <script src="/js/app.js"></script>

@@ -244,6 +244,88 @@ exports.postCancelEvent = async (req, res, next) => {
   }
 };
 
+exports.postUpdateEvent = async (req, res, next) => {
+  try {
+    const celebrity = await Celebrity.findOne({ user: req.user._id });
+    const event = await Event.findOne({ _id: req.params.id, celebrity: celebrity._id });
+    if (!event) throw new AppError('Event not found.', 404);
+    if (['cancelled', 'completed'].includes(event.status)) {
+      throw new AppError('Cancelled or completed events cannot be edited.', 400);
+    }
+
+    const {
+      title, description, shortDescription, type, category,
+      startDate, endDate, timezone,
+      venueName, venueAddress, venueCity, venueCountry, virtualLink,
+      rulesAndGuidelines, tags,
+    } = req.body;
+
+    event.title = title || event.title;
+    event.description = description || event.description;
+    event.shortDescription = shortDescription;
+    event.type = type || event.type;
+    event.category = category || event.category;
+
+    const existingVenue = event.venue || {};
+    event.venue = {
+      coordinates: existingVenue.coordinates,
+      virtualPlatform: existingVenue.virtualPlatform,
+      name: venueName,
+      address: venueAddress,
+      city: venueCity,
+      country: venueCountry,
+      virtualLink,
+    };
+
+    if (startDate) event.startDate = new Date(startDate);
+    if (endDate) event.endDate = new Date(endDate);
+    event.timezone = timezone || event.timezone;
+    event.rulesAndGuidelines = rulesAndGuidelines ? rulesAndGuidelines.split('\n').filter(Boolean) : event.rulesAndGuidelines;
+    event.tags = tags ? tags.split(',').map((t) => t.trim().toLowerCase()) : event.tags;
+
+    // Update / add ticket categories (capacity can never drop below tickets already sold)
+    const categoryNames = ['general', 'premium', 'vip', 'platinum_vip'];
+    const categoryLabels = { general: 'General Admission', premium: 'Premium', vip: 'VIP', platinum_vip: 'Platinum VIP' };
+    const defaultBenefits = {
+      general: ['Event Access'],
+      premium: ['Event Access', 'Priority Entry', 'Better Seating'],
+      vip: ['Event Access', 'Meet Celebrity', 'Professional Photo', 'Autograph Session', 'Front Row Access'],
+      platinum_vip: ['Private Meet & Greet', 'VIP Lounge', 'Premium Merchandise', 'Personal Interaction', 'Professional Photo'],
+    };
+
+    categoryNames.forEach((name) => {
+      const price = parseFloat(req.body[`cat_${name}_price`]);
+      const capacity = parseInt(req.body[`cat_${name}_capacity`]);
+      const existing = event.ticketCategories.find((c) => c.name === name);
+
+      if (price >= 0 && capacity > 0) {
+        if (existing) {
+          existing.price = price;
+          existing.capacity = Math.max(capacity, existing.sold);
+          existing.isActive = true;
+        } else {
+          event.ticketCategories.push({
+            name, label: categoryLabels[name], price, capacity,
+            benefits: defaultBenefits[name], isActive: true,
+          });
+        }
+      } else if (existing) {
+        existing.isActive = false; // deactivate, but keep history of sold tickets
+      }
+    });
+
+    if (req.file) {
+      event.banner = { url: req.file.path, publicId: req.file.filename };
+    }
+
+    await event.save();
+    req.flash('success', 'Event updated successfully.');
+    res.redirect(`/celebrity/events/${event._id}/edit`);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ── Fan Club ──────────────────────────────────────────────────────────────────
 exports.getFanClub = async (req, res, next) => {
   try {

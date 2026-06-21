@@ -8,16 +8,89 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
-<%- include('../../partials/footer') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">Manage Celebrities</h1>
+      <p class="page-subtitle"><%= pagination.total %> total</p>
+    </div>
+
+    <form method="GET" action="/admin/celebrities" class="content-block mb-6">
+      <div class="form-row" style="grid-template-columns:2fr 1fr auto;align-items:end;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Search</label>
+          <input type="text" name="search" class="form-input" value="<%= filters.search || '' %>" placeholder="Stage name, bio, tags…">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Verification</label>
+          <select name="verified" class="form-select">
+            <option value="">All</option>
+            <option value="true" <%= filters.verified === 'true' ? 'selected' : '' %>>Verified</option>
+            <option value="false" <%= filters.verified === 'false' ? 'selected' : '' %>>Unverified</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Filter</button>
+      </div>
+    </form>
+
+    <div class="table-wrap content-block" style="padding:0;">
+      <table class="table">
+        <thead><tr><th>Celebrity</th><th>Category</th><th>Account</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <% celebrities.forEach(c => { %>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:var(--space-3);">
+                <img src="<%= c.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" onerror="this.src='/images/defaults/avatar.png'">
+                <div>
+                  <a href="/admin/celebrities/<%= c._id %>" style="font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:4px;text-decoration:none;">
+                    <%= c.stageName %> <% if (c.isVerified) { %>✅<% } %> <% if (c.isFeatured) { %>⭐<% } %>
+                  </a>
+                  <div style="font-size:var(--text-xs);color:var(--text-muted);"><%= c.user?.email %></div>
+                </div>
+              </div>
+            </td>
+            <td style="text-transform:capitalize;"><%= c.category %></td>
+            <td><span class="badge badge-<%= c.user?.isActive ? 'success' : 'muted' %>"><%= c.user?.isActive ? 'Active' : 'Inactive' %></span></td>
+            <td><span class="badge badge-<%= c.isVerified ? 'success' : 'warning' %>"><%= c.isVerified ? 'Verified' : 'Pending' %></span></td>
+            <td style="display:flex;gap:6px;">
+              <% if (['admin','super_admin'].includes(currentUser.role)) { %>
+              <% if (!c.isVerified) { %>
+              <form action="/admin/celebrities/<%= c._id %>/verify" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Verify this celebrity?')">Verify</button>
+              </form>
+              <% } %>
+              <form action="/admin/celebrities/<%= c._id %>/toggle-featured" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-secondary btn-sm"><%= c.isFeatured ? 'Unfeature' : 'Feature' %></button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (pagination.pages > 1) { %>
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.pages; p++) { %>
+      <a href="/admin/celebrities?page=<%= p %>" class="pagination__btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+      <% } %>
+    </div>
+    <% } %>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

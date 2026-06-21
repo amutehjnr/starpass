@@ -68,6 +68,20 @@ const celebritySchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    applicationSource: {
+      type: String,
+      enum: ['self_applied', 'admin_invited', 'seeded'],
+      default: 'self_applied',
+    },
+    verificationDocuments: [
+      {
+        type: { type: String, enum: ['government_id', 'proof_of_fame', 'social_media', 'other'], default: 'other' },
+        url: String,
+        publicId: String,
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+    rejectionReason: { type: String, maxlength: 500 },
     basePrice: {
       type: Number,
       default: 0,

@@ -8,16 +8,68 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../../partials/navbar') %>
-<%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
-<%- include('../../partials/footer') %>
+<%- include('../partials/navbar') %>
+<%- include('../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <div class="page-header">
+      <h1 class="page-title">Manage Events</h1>
+      <p class="page-subtitle"><%= pagination.total %> total events</p>
+    </div>
+
+    <div class="flex gap-2 mb-6" style="flex-wrap:wrap;">
+      <% ['all','draft','published','postponed','cancelled','completed'].forEach(s => { %>
+      <a href="/admin/events<%= s === 'all' ? '' : '?status=' + s %>" class="btn btn-sm <%= currentStatus === s ? 'btn-primary' : 'btn-secondary' %>" style="text-transform:capitalize;"><%= s %></a>
+      <% }) %>
+    </div>
+
+    <div class="table-wrap content-block" style="padding:0;">
+      <table class="table">
+        <thead><tr><th>Event</th><th>Celebrity</th><th>Type</th><th>Date</th><th>Status</th><th>Sold</th><th></th></tr></thead>
+        <tbody>
+          <% events.forEach(e => { %>
+          <tr>
+            <td style="font-weight:600;color:var(--text-primary);"><%= e.title %> <% if (e.isFeatured) { %>⭐<% } %></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:var(--space-2);">
+                <img src="<%= e.celebrity?.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">
+                <span style="font-size:var(--text-sm);"><%= e.celebrity?.stageName %></span>
+              </div>
+            </td>
+            <td style="text-transform:capitalize;"><%= e.type %></td>
+            <td><%= new Date(e.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) %></td>
+            <td><span class="badge badge-<%= e.status === 'published' ? 'success' : e.status === 'draft' ? 'muted' : e.status === 'cancelled' ? 'error' : e.status === 'postponed' ? 'warning' : 'info' %>" style="text-transform:capitalize;"><%= e.status %></span></td>
+            <td><%= e.totalSold %>/<%= e.totalCapacity %></td>
+            <td>
+              <% if (['admin','super_admin'].includes(currentUser.role)) { %>
+              <form action="/admin/events/<%= e._id %>/toggle-featured" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-secondary btn-sm"><%= e.isFeatured ? 'Unfeature' : 'Feature' %></button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (pagination.pages > 1) { %>
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.pages; p++) { %>
+      <a href="/admin/events?page=<%= p %><%= currentStatus !== 'all' ? '&status=' + currentStatus : '' %>" class="pagination__btn <%= p === pagination.page ? 'active' : '' %>"><%= p %></a>
+      <% } %>
+    </div>
+    <% } %>
+
+  </main>
+</div>
+
+<%- include('../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

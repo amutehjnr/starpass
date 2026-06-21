@@ -149,6 +149,69 @@ const emailTemplates = {
         </div>
       </div>`,
   }),
+
+  celebrityApplicationReceived: (user, celebrity) => ({
+  subject: 'Your StarPass Celebrity Application Was Received',
+  html: `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:12px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#8b5cf6,#d946ef);padding:40px;text-align:center;">
+        <h1 style="margin:0;font-size:32px;">⭐ StarPass</h1>
+      </div>
+      <div style="padding:40px;">
+        <h2>Application Received ✅</h2>
+        <p style="color:#ccc;line-height:1.7;">Hi ${user.firstName}, thanks for applying as <strong>${celebrity.stageName}</strong>. Our team typically reviews applications within 2-3 business days. We'll email you as soon as a decision is made.</p>
+        <a href="${process.env.APP_URL}/celebrity/dashboard" style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#d946ef);color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:20px;">View Your Dashboard</a>
+      </div>
+    </div>`,
+}),
+
+celebrityApplicationApproved: (user, celebrity) => ({
+  subject: "🎉 You're Verified on StarPass!",
+  html: `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:12px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#22c55e,#16a34a);padding:40px;text-align:center;">
+        <h1 style="margin:0;font-size:32px;">⭐ StarPass</h1>
+      </div>
+      <div style="padding:40px;">
+        <h2>You're Verified! 🎉</h2>
+        <p style="color:#ccc;line-height:1.7;">Congratulations, ${user.firstName}! <strong>${celebrity.stageName}</strong> is now a verified celebrity on StarPass. You can publish events and start meeting your fans.</p>
+        <a href="${process.env.APP_URL}/celebrity/events/create" style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#d946ef);color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:20px;">Create Your First Event</a>
+      </div>
+    </div>`,
+}),
+
+celebrityApplicationRejected: (user, celebrity, reason) => ({
+  subject: 'Update on Your StarPass Celebrity Application',
+  html: `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:12px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#ef4444,#dc2626);padding:40px;text-align:center;">
+        <h1 style="margin:0;font-size:32px;">⭐ StarPass</h1>
+      </div>
+      <div style="padding:40px;">
+        <h2>Application Update</h2>
+        <p style="color:#ccc;line-height:1.7;">Hi ${user.firstName}, after review, we were unable to verify your application for <strong>${celebrity.stageName}</strong> at this time.</p>
+        ${reason ? `<div style="background:#1a0000;border-radius:8px;padding:16px;margin:16px 0;border-left:3px solid #ef4444;"><p style="margin:0;color:#fca5a5;">Reason: ${reason}</p></div>` : ''}
+        <p style="color:#ccc;">If you believe this was a mistake or have additional information, please contact our support team.</p>
+        <a href="${process.env.APP_URL}/contact" style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#d946ef);color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:20px;">Contact Support</a>
+      </div>
+    </div>`,
+}),
+
+celebrityInvitation: (invitation, rawToken) => ({
+  subject: `You're Invited to Join StarPass as ${invitation.stageName}`,
+  html: `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0a0a0a;color:#fff;border-radius:12px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#8b5cf6,#d946ef);padding:40px;text-align:center;">
+        <h1 style="margin:0;font-size:32px;">⭐ StarPass</h1>
+      </div>
+      <div style="padding:40px;">
+        <h2>You're Invited! ⭐</h2>
+        <p style="color:#ccc;line-height:1.7;">StarPass has invited you to join as <strong>${invitation.stageName}</strong>. Claim your account to set up your profile and start hosting meet & greet events with your fans.</p>
+        <a href="${process.env.APP_URL}/claim/${rawToken}" style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#d946ef);color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:20px;">Claim Your Account</a>
+        <p style="color:#666;margin-top:20px;font-size:14px;">This invitation expires on ${new Date(invitation.expiresAt).toLocaleDateString()}.</p>
+      </div>
+    </div>`,
+}),
 };
 
 const sendTemplateEmail = async (templateName, to, ...args) => {
@@ -157,5 +220,7 @@ const sendTemplateEmail = async (templateName, to, ...args) => {
   const { subject, html } = template(...args);
   return sendMail({ to, subject, html });
 };
+
+
 
 module.exports = { sendMail, sendTemplateEmail, emailTemplates };

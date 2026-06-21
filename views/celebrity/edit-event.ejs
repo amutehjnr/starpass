@@ -10,14 +10,260 @@
 <body>
 <%- include('../../partials/navbar') %>
 <%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <button class="btn btn-secondary btn-sm mb-6" id="sidebarToggle" style="display:none;">☰ Menu</button>
+
+    <div class="page-header flex-between">
+      <div>
+        <a href="/celebrity/events" class="btn btn-ghost btn-sm mb-3">← Back to Events</a>
+        <h1 class="page-title"><%= event.title %></h1>
+        <p class="page-subtitle">Created <%= new Date(event.createdAt).toLocaleDateString() %></p>
+      </div>
+      <span class="badge badge-<%= event.status === 'published' ? 'success' : event.status === 'draft' ? 'muted' : event.status === 'cancelled' ? 'error' : event.status === 'postponed' ? 'warning' : 'info' %>" style="font-size:var(--text-sm);padding:6px 16px;text-transform:capitalize;">
+        <%= event.status %>
+      </span>
+    </div>
+
+    <% const locked = ['cancelled','completed'].includes(event.status); %>
+    <% if (locked) { %>
+    <div class="alert alert-info mb-6">
+      <span class="alert__icon">🔒</span>
+      <div class="alert__content">This event is <%= event.status %> and can no longer be edited.</div>
+    </div>
+    <% } %>
+
+    <div class="grid-2 gap-6">
+
+      <!-- Left: Edit Form -->
+      <div>
+        <form action="/celebrity/events/<%= event._id %>/edit" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <fieldset <%= locked ? 'disabled' : '' %> style="border:none;padding:0;margin:0;">
+
+          <!-- Banner -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Event Banner</h3>
+            <img src="<%= event.banner?.url || '/images/defaults/event-banner.jpg' %>" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--radius-md);margin-bottom:var(--space-4);">
+            <div class="upload-zone">
+              <input type="file" name="banner" accept="image/*" class="upload-zone__input">
+              <div style="font-size:32px;margin-bottom:var(--space-2);">🖼️</div>
+              <div class="upload-zone__title">Replace Banner</div>
+              <img class="upload-zone__preview" style="display:none;max-height:160px;">
+            </div>
+          </div>
+
+          <!-- Basic Info -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Basic Information</h3>
+
+            <div class="form-group">
+              <label class="form-label">Event Title <span class="required">*</span></label>
+              <input type="text" name="title" class="form-input" value="<%= event.title %>" required maxlength="200">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Short Description</label>
+              <input type="text" name="shortDescription" class="form-input" value="<%= event.shortDescription || '' %>" maxlength="500">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Full Description <span class="required">*</span></label>
+              <textarea name="description" class="form-textarea" rows="5" required><%= event.description %></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Event Type <span class="required">*</span></label>
+                <select name="type" id="eventType" class="form-select" required>
+                  <% ['physical','virtual','hybrid'].forEach(t => { %>
+                  <option value="<%= t %>" <%= event.type === t ? 'selected' : '' %>><%= t.charAt(0).toUpperCase() + t.slice(1) %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <% ['meet_greet','fan_conference','autograph_session','photo_session','vip_experience','birthday_shoutout','concert','other'].forEach(c => { %>
+                  <option value="<%= c %>" <%= event.category === c ? 'selected' : '' %>><%= c.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase()) %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Start Date & Time <span class="required">*</span></label>
+                <input type="datetime-local" name="startDate" class="form-input" value="<%= new Date(event.startDate).toISOString().slice(0,16) %>" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">End Date & Time <span class="required">*</span></label>
+                <input type="datetime-local" name="endDate" class="form-input" value="<%= new Date(event.endDate).toISOString().slice(0,16) %>" required>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Timezone</label>
+              <input type="text" name="timezone" class="form-input" value="<%= event.timezone || 'UTC' %>">
+            </div>
+          </div>
+
+          <!-- Venue -->
+          <div class="content-block mb-5" id="venueFields">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Venue</h3>
+            <div class="form-group">
+              <label class="form-label">Venue Name</label>
+              <input type="text" name="venueName" class="form-input" value="<%= event.venue?.name || '' %>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <input type="text" name="venueAddress" class="form-input" value="<%= event.venue?.address || '' %>">
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">City</label>
+                <input type="text" name="venueCity" class="form-input" value="<%= event.venue?.city || '' %>">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Country</label>
+                <input type="text" name="venueCountry" class="form-input" value="<%= event.venue?.country || '' %>">
+              </div>
+            </div>
+          </div>
+
+          <div class="content-block mb-5" id="virtualFields" style="display:none;">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Virtual Link</h3>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Meeting Link</label>
+              <input type="url" name="virtualLink" class="form-input" value="<%= event.venue?.virtualLink || '' %>">
+            </div>
+          </div>
+
+          <!-- Ticket Categories -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-2);">Ticket Categories</h3>
+            <p class="form-hint mb-5">Capacity can't be set below tickets already sold.</p>
+
+            <% const catMeta = [
+              { key: 'general', label: 'General Admission', icon: '🎫' },
+              { key: 'premium', label: 'Premium', icon: '🎟️' },
+              { key: 'vip', label: 'VIP', icon: '⭐' },
+              { key: 'platinum_vip', label: 'Platinum VIP', icon: '💎' },
+            ]; %>
+            <% catMeta.forEach(meta => {
+              const existing = event.ticketCategories.find(c => c.name === meta.key);
+            %>
+            <div style="border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:var(--space-5);margin-bottom:var(--space-4);">
+              <div class="flex-between mb-3">
+                <span style="font-weight:600;"><%= meta.icon %> <%= meta.label %></span>
+                <% if (existing) { %><span style="font-size:var(--text-xs);color:var(--text-muted);"><%= existing.sold %> sold</span><% } %>
+              </div>
+              <div class="form-row" style="margin-bottom:0;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Price (USD)</label>
+                  <div class="input-group">
+                    <span class="input-group-prefix">$</span>
+                    <input type="number" name="cat_<%= meta.key %>_price" class="form-input" min="0" step="0.01" value="<%= existing ? existing.price : '' %>" placeholder="0.00">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Capacity</label>
+                  <input type="number" name="cat_<%= meta.key %>_capacity" class="form-input" min="<%= existing ? existing.sold : 0 %>" value="<%= existing ? existing.capacity : '' %>" placeholder="0">
+                </div>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+
+          <!-- Rules & Tags -->
+          <div class="content-block">
+            <div class="form-group">
+              <label class="form-label">Rules & Guidelines</label>
+              <textarea name="rulesAndGuidelines" class="form-textarea" rows="4"><%= (event.rulesAndGuidelines || []).join('\n') %></textarea>
+              <div class="form-hint">One per line</div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Tags</label>
+              <input type="text" name="tags" class="form-input" value="<%= (event.tags || []).join(', ') %>">
+              <div class="form-hint">Comma-separated</div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg mt-6">Save Changes</button>
+          </fieldset>
+        </form>
+      </div>
+
+      <!-- Right: Stats + Actions -->
+      <div>
+        <div class="content-block mb-5">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Stats</h3>
+          <div style="display:flex;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--border-subtle);">
+            <span style="font-size:var(--text-sm);color:var(--text-muted);">Total Sold</span>
+            <span style="font-size:var(--text-sm);font-weight:600;"><%= event.totalSold %>/<%= event.totalCapacity %></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:var(--space-3) 0;">
+            <span style="font-size:var(--text-sm);color:var(--text-muted);">Revenue</span>
+            <span style="font-size:var(--text-sm);font-weight:600;color:var(--color-success);">$<%= (event.revenue || 0).toLocaleString() %></span>
+          </div>
+        </div>
+
+        <% if (event.status === 'draft') { %>
+        <div class="content-block mb-5" style="border-color:rgba(34,197,94,0.25);">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-3);color:var(--color-success);">🚀 Publish Event</h3>
+          <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-4);">Once published, fans will be able to discover and purchase tickets for this event.</p>
+          <form action="/celebrity/events/<%= event._id %>/publish" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-success btn-full" onclick="return confirm('Publish this event?')">Publish Event</button>
+          </form>
+        </div>
+        <% } %>
+
+        <% if (!locked) { %>
+        <div class="content-block" style="border-color:rgba(239,68,68,0.25);">
+          <h3 style="font-size:var(--text-base);margin-bottom:var(--space-3);color:var(--color-error);">🚫 Cancel Event</h3>
+          <form action="/celebrity/events/<%= event._id %>/cancel" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="form-group">
+              <label class="form-label">Reason</label>
+              <textarea name="cancelReason" class="form-textarea" rows="3" placeholder="Why is this event being cancelled?"></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger btn-full" onclick="return confirm('Cancel this event? Ticket holders will be notified.')">Cancel Event</button>
+          </form>
+        </div>
+        <% } %>
+
+        <% if (event.status === 'cancelled') { %>
+        <div class="content-block" style="text-align:center;padding:var(--space-8);">
+          <div style="font-size:48px;margin-bottom:var(--space-4);">🚫</div>
+          <h4 style="color:var(--color-error);">Event Cancelled</h4>
+          <% if (event.cancelReason) { %><p style="color:var(--text-muted);margin-top:var(--space-3);"><%= event.cancelReason %></p><% } %>
+        </div>
+        <% } %>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
 <%- include('../../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+  const typeSelect = document.getElementById('eventType');
+  const venueFields = document.getElementById('venueFields');
+  const virtualFields = document.getElementById('virtualFields');
+  function toggleVenueFields() {
+    const val = typeSelect.value;
+    venueFields.style.display = val === 'virtual' ? 'none' : 'block';
+    virtualFields.style.display = val === 'physical' ? 'none' : 'block';
+  }
+  typeSelect.addEventListener('change', toggleVenueFields);
+  toggleVenueFields();
+</script>
 </body>
 </html>

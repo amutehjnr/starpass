@@ -7,9 +7,16 @@ const csrfProtection = csurf({
   ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
 });
 
-// Apply CSRF protection but gracefully handle API routes
+// Apply CSRF protection but gracefully handle API routes and multipart routes.
+// Multipart/form-data bodies aren't parsed yet at this point in the stack
+// (multer runs per-route, after this), so csurf can't see req.body._csrf for
+// file-upload routes. Those routes apply `csrfProtection` themselves, directly
+// after their multer middleware — see routes/fan.js and routes/celebrity.js.
 const csrfMiddleware = (req, res, next) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/auth/refresh')) {
+    return next();
+  }
+  if (req.is('multipart/form-data')) {
     return next();
   }
   csrfProtection(req, res, next);
@@ -25,4 +32,4 @@ const csrfToken = (req, res, next) => {
   next();
 };
 
-module.exports = { csrfMiddleware, csrfToken };
+module.exports = { csrfMiddleware, csrfToken, csrfProtection };

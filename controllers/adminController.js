@@ -10,6 +10,9 @@ const { notifyPaymentApproved, notifyPaymentRejected } = require('../services/no
 const { AppError } = require('../middleware/errorHandler');
 const { emitToUser } = require('../config/socket');
 const logger = require('../config/logger');
+const crypto = require('crypto');
+const Invitation = require('../models/Invitation');
+const { sendTemplateEmail } = require('../services/emailService');
 
 // ── Dashboard Analytics ───────────────────────────────────────────────────────
 exports.getDashboard = async (req, res, next) => {
@@ -298,7 +301,19 @@ exports.getCelebrities = async (req, res, next) => {
 
 exports.verifyCelebrity = async (req, res, next) => {
   try {
-    await Celebrity.findByIdAndUpdate(req.params.id, { isVerified: true, verifiedAt: new Date() });
+    const celebrity = await Celebrity.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isVerified: true, verifiedAt: new Date() }, $unset: { rejectionReason: 1 } },
+      { new: true }
+    ).populate('user');
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    if (celebrity.user) {
+      await User.findByIdAndUpdate(celebrity.user._id, { isActive: true });
+      await sendTemplateEmail('celebrityApplicationApproved', celebrity.user.email, celebrity.user, celebrity)
+        .catch((e) => logger.error('Approval email error:', e));
+    }
+
     req.flash('success', 'Celebrity verified successfully.');
     res.redirect('/admin/celebrities');
   } catch (err) {
@@ -314,6 +329,123 @@ exports.toggleFeaturedCelebrity = async (req, res, next) => {
     await celebrity.save();
     req.flash('success', `Celebrity ${celebrity.isFeatured ? 'featured' : 'unfeatured'}.`);
     res.redirect('/admin/celebrities');
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ── Celebrity Detail / Review ─────────────────────────────────────────────────
+exports.getCelebrityDetail = async (req, res, next) => {
+  try {
+    const celebrity = await Celebrity.findById(req.params.id)
+      .populate({ path: 'user', select: 'firstName lastName email isActive createdAt' });
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    res.render('admin/celebrity-detail', { title: `Review – ${celebrity.stageName}`, celebrity });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.rejectCelebrity = async (req, res, next) => {
+  try {
+    const { rejectionReason } = req.body;
+    if (!rejectionReason?.trim()) {
+      req.flash('error', 'Rejection reason is required.');
+      return res.redirect('back');
+    }
+
+    const celebrity = await Celebrity.findById(req.params.id).populate('user');
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    celebrity.rejectionReason = rejectionReason;
+    celebrity.isVerified = false;
+    await celebrity.save();
+
+    if (celebrity.user) {
+      await User.findByIdAndUpdate(celebrity.user._id, { isActive: false });
+      await sendTemplateEmail('celebrityApplicationRejected', celebrity.user.email, celebrity.user, celebrity, rejectionReason)
+        .catch((e) => logger.error('Rejection email error:', e));
+    }
+
+    req.flash('success', 'Application rejected.');
+    res.redirect('/admin/celebrities');
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ── Invitations ─────────────────────────────────────────────────────────────
+exports.getInvitations = async (req, res, next) => {
+  try {
+    const invitations = await Invitation.find().sort({ createdAt: -1 }).populate({ path: 'invitedBy', select: 'firstName lastName' });
+    res.render('admin/invitations', { title: 'Celebrity Invitations – StarPass', invitations });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postCreateInvitation = async (req, res, next) => {
+  try {
+    const { email, stageName, category, note } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      req.flash('error', 'A user with this email already exists.');
+      return res.redirect('/admin/invitations');
+    }
+
+    const existingInvite = await Invitation.findOne({ email, status: 'pending' });
+    if (existingInvite) {
+      req.flash('error', 'There is already a pending invitation for this email.');
+      return res.redirect('/admin/invitations');
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const invitation = await Invitation.create({
+      email,
+      stageName,
+      category,
+      note,
+      invitedBy: req.user._id,
+      token: crypto.createHash('sha256').update(rawToken).digest('hex'),
+    });
+
+    await sendTemplateEmail('celebrityInvitation', email, invitation, rawToken)
+      .catch((e) => logger.error('Invitation email error:', e));
+
+    req.flash('success', `Invitation sent to ${email}.`);
+    res.redirect('/admin/invitations');
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postRevokeInvitation = async (req, res, next) => {
+  try {
+    await Invitation.findOneAndUpdate({ _id: req.params.id, status: 'pending' }, { status: 'revoked' });
+    req.flash('success', 'Invitation revoked.');
+    res.redirect('/admin/invitations');
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postResendInvitation = async (req, res, next) => {
+  try {
+    const invitation = await Invitation.findOne({ _id: req.params.id, status: 'pending' });
+    if (!invitation) throw new AppError('Invitation not found or already used.', 404);
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    invitation.token = crypto.createHash('sha256').update(rawToken).digest('hex');
+    invitation.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await invitation.save();
+
+    await sendTemplateEmail('celebrityInvitation', invitation.email, invitation, rawToken)
+      .catch((e) => logger.error('Invitation email error:', e));
+
+    req.flash('success', 'Invitation resent.');
+    res.redirect('/admin/invitations');
   } catch (err) {
     next(err);
   }

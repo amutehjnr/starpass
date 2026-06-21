@@ -11,11 +11,46 @@
 <%- include('../partials/navbar') %>
 <%- include('../partials/flash') %>
 <main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
+  <section class="section">
+    <div class="container" style="max-width:800px;">
+      <div class="section-header">
+        <div class="section-label">✨ Our Story</div>
+        <h1 class="section-title">About StarPass</h1>
+        <p class="section-subtitle">Bringing fans and their favorite celebrities together, one unforgettable moment at a time.</p>
+      </div>
+
+      <div class="content-block mb-6">
+        <p style="color:var(--text-secondary);line-height:1.8;margin-bottom:var(--space-5);">
+          StarPass was built on a simple idea: meeting your favorite celebrity shouldn't be reserved for the lucky few. We connect verified celebrities directly with their fans through secure, transparent meet & greet events — from intimate photo sessions to exclusive VIP experiences.
+        </p>
+        <p style="color:var(--text-secondary);line-height:1.8;">
+          Every celebrity on our platform is manually verified, every event is backed by our review team, and every fan gets a real, tangible memory — a QR-coded ticket, a professional photo, a story worth telling.
+        </p>
+      </div>
+
+      <div class="grid-3 mb-8">
+        <div class="card" style="text-align:center;"><div class="card__body">
+          <div style="font-size:40px;margin-bottom:var(--space-3);">✅</div>
+          <h4 style="margin-bottom:var(--space-2);">Verified Celebrities</h4>
+          <p style="font-size:var(--text-sm);color:var(--text-muted);">Every profile is reviewed before going live.</p>
+        </div></div>
+        <div class="card" style="text-align:center;"><div class="card__body">
+          <div style="font-size:40px;margin-bottom:var(--space-3);">🔒</div>
+          <h4 style="margin-bottom:var(--space-2);">Secure Payments</h4>
+          <p style="font-size:var(--text-sm);color:var(--text-muted);">Every transaction is manually reviewed by our team.</p>
+        </div></div>
+        <div class="card" style="text-align:center;"><div class="card__body">
+          <div style="font-size:40px;margin-bottom:var(--space-3);">🎟️</div>
+          <h4 style="margin-bottom:var(--space-2);">Real Memories</h4>
+          <p style="font-size:var(--text-sm);color:var(--text-muted);">QR-coded tickets and unforgettable moments.</p>
+        </div></div>
+      </div>
+
+      <div style="text-align:center;">
+        <a href="/celebrities" class="btn btn-primary btn-lg">Browse Celebrities</a>
+      </div>
+    </div>
+  </section>
 </main>
 <%- include('../partials/footer') %>
 <script src="/js/app.js"></script>

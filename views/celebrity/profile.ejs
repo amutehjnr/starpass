@@ -10,14 +10,98 @@
 <body>
 <%- include('../../partials/navbar') %>
 <%- include('../../partials/flash') %>
-<main>
-  <div class="container section">
-    <h1 class="page-title"><%= title %></h1>
-    <p class="page-subtitle" style="margin-top:var(--space-4);">This page is fully implemented in the backend — connect your EJS template here.</p>
-    <a href="/" class="btn btn-primary mt-6">← Go Home</a>
-  </div>
-</main>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+
+  <main class="dashboard-content">
+    <button class="btn btn-secondary btn-sm mb-6" id="sidebarToggle" style="display:none;">☰ Menu</button>
+
+    <div class="page-header">
+      <h1 class="page-title">My Profile</h1>
+      <p class="page-subtitle">Manage how fans see you on StarPass</p>
+    </div>
+
+    <form action="/celebrity/profile" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="grid-2 gap-6">
+
+        <!-- Left: Images -->
+        <div>
+          <div class="content-block">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Profile Photo</h3>
+            <div class="upload-zone">
+              <input type="file" name="profileImage" accept="image/*" class="upload-zone__input">
+              <div style="font-size:48px;margin-bottom:var(--space-3);">📷</div>
+              <div class="upload-zone__title">Upload Profile Photo</div>
+              <div class="upload-zone__hint">JPG, PNG or WEBP — up to 5MB</div>
+              <img class="upload-zone__preview" src="<%= celebrity.profileImage?.url || '' %>" style="<%= celebrity.profileImage?.url ? 'display:block;' : 'display:none;' %>max-height:200px;">
+            </div>
+          </div>
+
+          <div class="content-block mt-6">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Hero Banner</h3>
+            <div class="upload-zone">
+              <input type="file" name="heroImage" accept="image/*" class="upload-zone__input">
+              <div style="font-size:48px;margin-bottom:var(--space-3);">🖼️</div>
+              <div class="upload-zone__title">Upload Hero Banner</div>
+              <div class="upload-zone__hint">Displayed at the top of your public profile</div>
+              <img class="upload-zone__preview" src="<%= celebrity.heroImage?.url || '' %>" style="<%= celebrity.heroImage?.url ? 'display:block;' : 'display:none;' %>max-height:200px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Details -->
+        <div class="content-block">
+          <div class="form-group">
+            <label class="form-label">Stage Name <span class="required">*</span></label>
+            <input type="text" name="stageName" class="form-input" value="<%= celebrity.stageName %>" required maxlength="100">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Category <span class="required">*</span></label>
+            <select name="category" class="form-select" required>
+              <% ['actor','musician','athlete','comedian','influencer','model','gamer','chef','author','other'].forEach(cat => { %>
+              <option value="<%= cat %>" <%= celebrity.category === cat ? 'selected' : '' %>><%= cat.charAt(0).toUpperCase() + cat.slice(1) %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Short Bio</label>
+            <input type="text" name="shortBio" class="form-input" value="<%= celebrity.shortBio || '' %>" maxlength="300" placeholder="One-line tagline shown on cards">
+            <div class="form-hint">Max 300 characters</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Full Biography</label>
+            <textarea name="biography" class="form-textarea" rows="6" maxlength="5000" placeholder="Tell fans about yourself…"><%= celebrity.biography || '' %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Achievements</label>
+            <textarea name="achievements" class="form-textarea" rows="4" placeholder="One achievement per line"><%= (celebrity.achievements || []).join('\n') %></textarea>
+            <div class="form-hint">One per line — shown as a list on your profile</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tags</label>
+            <input type="text" name="tags" class="form-input" value="<%= (celebrity.tags || []).join(', ') %>" placeholder="pop, music, performer">
+            <div class="form-hint">Comma-separated</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg">Save Profile</button>
+        </div>
+
+      </div>
+    </form>
+
+  </main>
+</div>
+
 <%- include('../../partials/footer') %>
 <script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>
