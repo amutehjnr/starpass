@@ -10,14 +10,19 @@
     <!-- Desktop Nav -->
     <nav class="navbar__nav">
       <a href="/celebrities" class="navbar__link <%= currentPath.startsWith('/celebrities') ? 'active' : '' %>">Celebrities</a>
-      <a href="/events"      class="navbar__link <%= currentPath.startsWith('/events') ? 'active' : '' %>">Events</a>
-      <a href="/fan-clubs"   class="navbar__link <%= currentPath.startsWith('/fan-clubs') ? 'active' : '' %>">Fan Clubs</a>
-      <a href="/about"       class="navbar__link <%= currentPath === '/about' ? 'active' : '' %>">About</a>
+      <a href="/events" class="navbar__link <%= currentPath.startsWith('/events') ? 'active' : '' %>">Events</a>
+      <a href="/fan-clubs" class="navbar__link <%= currentPath.startsWith('/fan-clubs') ? 'active' : '' %>">Fan Clubs</a>
+      <a href="/about" class="navbar__link <%= currentPath === '/about' ? 'active' : '' %>">About</a>
     </nav>
 
     <!-- Search -->
     <div class="navbar__search" id="navSearch">
-      <span class="navbar__search-icon">🔍</span>
+      <span class="navbar__search-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
       <input type="text" class="navbar__search-input" placeholder="Search celebrities & events…" id="searchInput" autocomplete="off">
       <div class="navbar__search-results" id="searchResults"></div>
     </div>
@@ -29,7 +34,10 @@
 
         <!-- Notification Bell -->
         <a href="/fan/notifications" class="navbar__notif-btn" id="notifBtn" title="Notifications">
-          🔔
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
           <span class="navbar__notif-badge hidden" id="notifBadge">0</span>
         </a>
 
@@ -43,7 +51,9 @@
               onerror="this.src='/images/defaults/avatar.png'"
             >
             <span class="navbar__user-name"><%= currentUser.firstName %></span>
-            <span class="navbar__chevron">▾</span>
+            <svg class="navbar__chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
           </button>
 
           <div class="navbar__dropdown">
@@ -54,60 +64,124 @@
             </div>
 
             <% if (['fan'].includes(currentUser.role)) { %>
-              <a href="/fan/dashboard"  class="navbar__dropdown-item">📊 Dashboard</a>
-              <a href="/fan/tickets"    class="navbar__dropdown-item">🎟️ My Tickets</a>
-              <a href="/fan/payments"   class="navbar__dropdown-item">💳 Payments</a>
-              <a href="/fan/fan-clubs"  class="navbar__dropdown-item">⭐ Fan Clubs</a>
-              <a href="/fan/profile"    class="navbar__dropdown-item">👤 Profile</a>
+              <a href="/fan/dashboard" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+              </a>
+              <a href="/fan/tickets" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                My Tickets
+              </a>
+              <a href="/fan/payments" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Payments
+              </a>
+              <a href="/fan/fan-clubs" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Fan Clubs
+              </a>
+              <a href="/fan/profile" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Profile
+              </a>
             <% } %>
 
             <% if (['celebrity','celebrity_manager','event_organizer'].includes(currentUser.role)) { %>
-              <a href="/celebrity/dashboard" class="navbar__dropdown-item">📊 Dashboard</a>
-              <a href="/celebrity/events"    class="navbar__dropdown-item">🎪 My Events</a>
-              <a href="/celebrity/fan-club"  class="navbar__dropdown-item">⭐ Fan Club</a>
-              <a href="/celebrity/analytics" class="navbar__dropdown-item">📈 Analytics</a>
+              <a href="/celebrity/dashboard" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+              </a>
+              <a href="/celebrity/events" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                My Events
+              </a>
+              <a href="/celebrity/fan-club" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Fan Club
+              </a>
+              <a href="/celebrity/analytics" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Analytics
+              </a>
             <% } %>
 
             <% if (['admin','super_admin','moderator'].includes(currentUser.role)) { %>
-              <a href="/admin/dashboard"   class="navbar__dropdown-item">🛡️ Admin Panel</a>
-              <a href="/admin/gift-cards"  class="navbar__dropdown-item">💳 Gift Cards</a>
+              <a href="/admin/dashboard" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                Admin Panel
+              </a>
+              <a href="/admin/gift-cards" class="navbar__dropdown-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Gift Cards
+              </a>
             <% } %>
 
             <div class="navbar__dropdown-divider"></div>
             <form action="/auth/logout" method="POST" style="margin:0;">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <button type="submit" class="navbar__dropdown-item danger" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;">
-                🚪 Sign Out
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign Out
               </button>
             </form>
           </div>
         </div>
 
       <% } else { %>
-        <a href="/auth/login"    class="btn btn-secondary btn-sm">Login</a>
+        <a href="/auth/login" class="btn btn-secondary btn-sm">Login</a>
         <a href="/auth/register" class="btn btn-primary btn-sm">Join Now</a>
       <% } %>
 
-      <!-- Mobile Toggle -->
-      <button class="navbar__mobile-toggle" id="mobileToggle" aria-label="Menu">
-        <span class="navbar__hamburger"></span>
-        <span class="navbar__hamburger"></span>
-        <span class="navbar__hamburger"></span>
-      </button>
     </div>
+
+    <!-- Mobile Toggle -->
+    <button class="navbar__mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+      <span class="navbar__hamburger"></span>
+      <span class="navbar__hamburger"></span>
+      <span class="navbar__hamburger"></span>
+    </button>
+
   </div>
 
   <!-- Mobile Menu -->
   <div class="navbar__mobile-menu" id="mobileMenu">
-    <nav class="navbar__mobile-nav">
-      <a href="/celebrities" class="navbar__mobile-link">Celebrities</a>
-      <a href="/events"      class="navbar__mobile-link">Events</a>
-      <a href="/fan-clubs"   class="navbar__mobile-link">Fan Clubs</a>
-      <a href="/about"       class="navbar__mobile-link">About</a>
-      <% if (!currentUser) { %>
-        <a href="/auth/login"    class="navbar__mobile-link">Login</a>
-        <a href="/auth/register" class="navbar__mobile-link">Join Now</a>
-      <% } %>
-    </nav>
+    <div class="navbar__mobile-menu-inner">
+      <nav class="navbar__mobile-nav">
+        <a href="/celebrities" class="navbar__mobile-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Celebrities
+        </a>
+        <a href="/events" class="navbar__mobile-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Events
+        </a>
+        <a href="/fan-clubs" class="navbar__mobile-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Fan Clubs
+        </a>
+        <a href="/about" class="navbar__mobile-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          About
+        </a>
+        <% if (!currentUser) { %>
+          <div class="navbar__mobile-divider"></div>
+          <a href="/auth/login" class="navbar__mobile-link btn-login">Login</a>
+          <a href="/auth/register" class="navbar__mobile-link btn-register">Join Now</a>
+        <% } else { %>
+          <div class="navbar__mobile-divider"></div>
+          <a href="/profile" class="navbar__mobile-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Profile
+          </a>
+          <form action="/auth/logout" method="POST" style="margin:0;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="navbar__mobile-link btn-logout" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sign Out
+            </button>
+          </form>
+        <% } %>
+      </nav>
+    </div>
   </div>
 </nav>
