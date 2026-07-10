@@ -315,3 +315,48 @@
 .navbar__mobile-toggle.open .navbar__hamburger:nth-child(3) {
   transform: translateY(-7px) rotate(-45deg);
 }
+
+.navbar__mobile-toggle {
+  display: none;
+  width: 40px; height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-left: auto; /* This pushes it to the right */
+  order: 2; /* Ensures it comes after brand */
+}
+
+/* Update mobile breakpoint */
+@media (max-width: 768px) {
+  .navbar__nav,
+  .navbar__search {
+    display: none;
+  }
+
+  .navbar__mobile-toggle {
+    display: flex;
+    margin-left: auto; /* Keep it at the right */
+    order: 2;
+  }
+
+  .navbar__actions {
+    order: 3; /* Actions come after the toggle */
+    margin-left: 0; /* Remove auto margin */
+  }
+
+  .navbar__user-name {
+    display: none;
+  }
+
+  .navbar__inner {
+    gap: var(--space-4);
+  }
+
+  .navbar__brand {
+    order: 1; /* Brand stays on the left */
+  }
+}
