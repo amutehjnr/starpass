@@ -403,11 +403,11 @@
   /* ── Mobile Toggle ──────────────────────────────────────── */
   .navbar__mobile-toggle {
     display: none;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -415,18 +415,28 @@
     cursor: pointer;
     flex-shrink: 0;
     transition: all 0.2s ease;
+    padding: 0;
+    position: relative;
   }
 
   .navbar__mobile-toggle:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .navbar__mobile-toggle:focus {
+    outline: 2px solid rgba(168, 85, 247, 0.5);
+    outline-offset: 2px;
   }
 
   .navbar__hamburger {
-    width: 20px;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.6);
+    display: block;
+    width: 22px;
+    height: 2.5px;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: 2px;
     transition: all 0.3s ease;
+    flex-shrink: 0;
   }
 
   /* ── Mobile Menu ────────────────────────────────────────── */
@@ -529,7 +539,7 @@
 
   /* ── Hamburger to X Animation ──────────────────────────── */
   .navbar__mobile-toggle.open .navbar__hamburger:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
+    transform: translateY(7.5px) rotate(45deg);
     background: rgba(255, 255, 255, 0.9);
   }
 
@@ -539,7 +549,7 @@
   }
 
   .navbar__mobile-toggle.open .navbar__hamburger:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
+    transform: translateY(-7.5px) rotate(-45deg);
     background: rgba(255, 255, 255, 0.9);
   }
 
@@ -565,8 +575,9 @@
     }
 
     .navbar__mobile-toggle {
-      display: flex;
+      display: flex !important;
       margin-left: auto;
+      order: 2;
     }
 
     .navbar__user-name {
@@ -575,6 +586,7 @@
 
     .navbar__actions {
       margin-left: 0;
+      order: 3;
     }
 
     .navbar__notif-btn {
@@ -621,8 +633,8 @@
     }
 
     .navbar__mobile-toggle {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
     }
 
     .navbar__hamburger {
