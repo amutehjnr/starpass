@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../../partials/navbar') %>
+<%- include('../../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+  <main class="dashboard-content">
+
+    <div class="page-header flex-between">
+      <div>
+        <a href="/admin/events" class="btn btn-ghost btn-sm mb-3">← Back to Events</a>
+        <h1 class="page-title"><%= event.title %></h1>
+        <p class="page-subtitle">by <%= event.celebrity?.stageName %></p>
+      </div>
+      <span class="badge badge-<%= event.status === 'published' ? 'success' : event.status === 'draft' ? 'muted' : event.status === 'cancelled' ? 'error' : event.status === 'postponed' ? 'warning' : 'info' %>" style="font-size:var(--text-sm);padding:6px 16px;text-transform:capitalize;">
+        <%= event.status %>
+      </span>
+    </div>
+
+    <form action="/admin/events/<%= event._id %>/edit" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <!-- Banner -->
+      <div class="content-block mb-5">
+        <img src="<%= event.banner?.url || '/images/defaults/event-banner.jpg' %>" style="width:100%;aspect-ratio:21/9;object-fit:cover;border-radius:var(--radius-md);margin-bottom:var(--space-4);">
+        <div class="upload-zone">
+          <input type="file" name="banner" accept="image/*" class="upload-zone__input">
+          <div style="font-size:24px;margin-bottom:var(--space-2);">🖼️</div>
+          <div class="upload-zone__title">Replace Banner</div>
+          <img class="upload-zone__preview" style="display:none;max-height:120px;">
+        </div>
+      </div>
+
+      <div class="grid-2 gap-6">
+        <div>
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Basic Information</h3>
+            <div class="form-group">
+              <label class="form-label">Celebrity</label>
+              <select name="celebrityId" class="form-select">
+                <% celebrities.forEach(c => { %>
+                <option value="<%= c._id %>" <%= event.celebrity?._id?.toString() === c._id.toString() ? 'selected' : '' %>><%= c.stageName %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Title <span class="required">*</span></label>
+              <input type="text" name="title" class="form-input" value="<%= event.title %>" required maxlength="200">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short Description</label>
+              <input type="text" name="shortDescription" class="form-input" value="<%= event.shortDescription || '' %>" maxlength="500">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Description <span class="required">*</span></label>
+              <textarea name="description" class="form-textarea" rows="5" required><%= event.description %></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Type <span class="required">*</span></label>
+                <select name="type" id="eventType" class="form-select" required>
+                  <% ['physical','virtual','hybrid'].forEach(t => { %>
+                  <option value="<%= t %>" <%= event.type === t ? 'selected' : '' %>><%= t.charAt(0).toUpperCase() + t.slice(1) %></option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <% ['meet_greet','fan_conference','autograph_session','photo_session','vip_experience','birthday_shoutout','concert','other'].forEach(c => { %>
+                  <option value="<%= c %>" <%= event.category === c ? 'selected' : '' %>><%= c.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase()) %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Start Date & Time</label>
+                <input type="datetime-local" name="startDate" class="form-input" value="<%= new Date(event.startDate).toISOString().slice(0,16) %>">
+              </div>
+              <div class="form-group">
+                <label class="form-label">End Date & Time</label>
+                <input type="datetime-local" name="endDate" class="form-input" value="<%= new Date(event.endDate).toISOString().slice(0,16) %>">
+              </div>
+            </div>
+          </div>
+
+          <!-- Venue -->
+          <div class="content-block mb-5" id="venueFields">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Venue</h3>
+            <div class="form-group"><label class="form-label">Venue Name</label><input type="text" name="venueName" class="form-input" value="<%= event.venue?.name || '' %>"></div>
+            <div class="form-group"><label class="form-label">Address</label><input type="text" name="venueAddress" class="form-input" value="<%= event.venue?.address || '' %>"></div>
+            <div class="form-row" style="margin-bottom:0;">
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">City</label><input type="text" name="venueCity" class="form-input" value="<%= event.venue?.city || '' %>"></div>
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Country</label><input type="text" name="venueCountry" class="form-input" value="<%= event.venue?.country || '' %>"></div>
+            </div>
+          </div>
+          <div class="content-block mb-5" id="virtualFields" style="display:none;">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Virtual Link</h3>
+            <div class="form-group" style="margin-bottom:0;"><label class="form-label">Meeting URL</label><input type="url" name="virtualLink" class="form-input" value="<%= event.venue?.virtualLink || '' %>"></div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Ticket Categories -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-2);">Ticket Categories</h3>
+            <p class="form-hint mb-4">Capacity cannot go below tickets already sold.</p>
+            <% [
+              { key: 'general', label: 'General Admission', icon: '🎫' },
+              { key: 'premium', label: 'Premium', icon: '🎟️' },
+              { key: 'vip', label: 'VIP', icon: '⭐' },
+              { key: 'platinum_vip', label: 'Platinum VIP', icon: '💎' },
+            ].forEach(meta => {
+              const existing = event.ticketCategories.find(c => c.name === meta.key);
+            %>
+            <div style="border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-3);">
+              <div class="flex-between mb-3">
+                <span style="font-weight:600;"><%= meta.icon %> <%= meta.label %></span>
+                <% if (existing) { %><span style="font-size:var(--text-xs);color:var(--text-muted);"><%= existing.sold %> sold</span><% } %>
+              </div>
+              <div class="form-row" style="margin-bottom:0;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Price (USD)</label>
+                  <div class="input-group"><span class="input-group-prefix">$</span><input type="number" name="cat_<%= meta.key %>_price" class="form-input" min="0" step="0.01" value="<%= existing ? existing.price : '' %>" placeholder="0.00"></div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Capacity</label>
+                  <input type="number" name="cat_<%= meta.key %>_capacity" class="form-input" min="<%= existing ? existing.sold : 0 %>" value="<%= existing ? existing.capacity : '' %>" placeholder="0">
+                </div>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+
+          <!-- Settings -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">⚙️ Settings</h3>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select name="status" class="form-select">
+                <% ['draft','published','postponed','cancelled','completed'].forEach(s => { %>
+                <option value="<%= s %>" <%= event.status === s ? 'selected' : '' %> style="text-transform:capitalize;"><%= s %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-check">
+                <input type="checkbox" name="isFeatured" class="form-check-input" <%= event.isFeatured ? 'checked' : '' %>>
+                <span class="form-check-label">Featured on homepage</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Rules & Tags -->
+          <div class="content-block">
+            <div class="form-group">
+              <label class="form-label">Rules & Guidelines</label>
+              <textarea name="rulesAndGuidelines" class="form-textarea" rows="4"><%= (event.rulesAndGuidelines || []).join('\n') %></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Tags</label>
+              <input type="text" name="tags" class="form-input" value="<%= (event.tags || []).join(', ') %>">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg mt-6">Save Changes</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Danger Zone -->
+    <div class="content-block mt-8" style="border-color:rgba(239,68,68,0.3);">
+      <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);color:var(--color-error);">⚠️ Danger Zone</h3>
+      <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:center;">
+        <form action="/admin/events/<%= event._id %>/suspend" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn" style="background:var(--color-warning);color:#000;" onclick="return confirm('Suspend this event?')">
+            ⏸️ <%= event.status === 'postponed' ? 'Reinstate Event' : 'Suspend Event' %>
+          </button>
+        </form>
+        <% if (currentUser.role === 'super_admin') { %>
+        <form action="/admin/events/<%= event._id %>/delete" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-danger" onclick="return confirm('Permanently delete this event? Only draft/cancelled events can be deleted.')">
+            🗑️ Delete Event
+          </button>
+        </form>
+        <% } %>
+        <p style="font-size:var(--text-xs);color:var(--text-muted);">Only draft or cancelled events can be deleted. Suspend active events first.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../../partials/footer') %>
+<script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+  const typeSelect = document.getElementById('eventType');
+  const venueFields = document.getElementById('venueFields');
+  const virtualFields = document.getElementById('virtualFields');
+  function toggleVenue() {
+    venueFields.style.display = typeSelect.value === 'virtual' ? 'none' : 'block';
+    virtualFields.style.display = typeSelect.value === 'physical' ? 'none' : 'block';
+  }
+  typeSelect.addEventListener('change', toggleVenue);
+  toggleVenue();
+</script>
+</body>
+</html>

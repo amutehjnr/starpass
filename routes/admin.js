@@ -4,52 +4,95 @@ const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/adminController');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { uploadGallery, uploadEventBanner } = require('../config/cloudinary');
 const { audit } = require('../middleware/auditLog');
+const { csrfProtection } = require('../middleware/csrf');
 
 const ADMIN_ROLES = ['admin', 'super_admin', 'moderator'];
 
 router.use(requireAuth, requireRole(...ADMIN_ROLES));
 
-// Dashboard
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 router.get('/dashboard', ctrl.getDashboard);
 
-// Users
+// ── Users ─────────────────────────────────────────────────────────────────────
 router.get('/users', requireRole('admin', 'super_admin'), ctrl.getUsers);
 router.post('/users/:id/toggle-status', requireRole('admin', 'super_admin'), audit('admin:user_toggle', 'User'), ctrl.toggleUserStatus);
 router.post('/users/:id/role', requireRole('admin', 'super_admin'), audit('admin:user_role', 'User'), ctrl.updateUserRole);
 
-// Gift Card Reviews
+// ── Gift Card Reviews ─────────────────────────────────────────────────────────
 router.get('/gift-cards', ctrl.getGiftCardReviews);
 router.get('/gift-cards/:id', ctrl.getGiftCardDetail);
 router.post('/gift-cards/:id/approve', audit('payment:approve', 'GiftCard'), ctrl.approveGiftCard);
 router.post('/gift-cards/:id/reject', audit('payment:reject', 'GiftCard'), ctrl.rejectGiftCard);
 router.post('/gift-cards/:id/flag', audit('payment:flag', 'GiftCard'), ctrl.flagGiftCard);
 
-// Celebrities
+// ── Celebrities ───────────────────────────────────────────────────────────────
 router.get('/celebrities', ctrl.getCelebrities);
+router.get('/celebrities/create', requireRole('admin', 'super_admin'), ctrl.getCreateCelebrity);
+router.post(
+  '/celebrities/create',
+  requireRole('admin', 'super_admin'),
+  uploadGallery.fields([{ name: 'profileImage', maxCount: 1 }, { name: 'heroImage', maxCount: 1 }]),
+  csrfProtection,
+  audit('admin:celebrity_create', 'Celebrity'),
+  ctrl.postCreateCelebrity
+);
+router.get('/celebrities/:id', ctrl.getCelebrityDetail);
+router.get('/celebrities/:id/edit', requireRole('admin', 'super_admin'), ctrl.getEditCelebrity);
+router.post(
+  '/celebrities/:id/edit',
+  requireRole('admin', 'super_admin'),
+  uploadGallery.fields([{ name: 'profileImage', maxCount: 1 }, { name: 'heroImage', maxCount: 1 }]),
+  csrfProtection,
+  audit('admin:celebrity_edit', 'Celebrity'),
+  ctrl.postEditCelebrity
+);
 router.post('/celebrities/:id/verify', requireRole('admin', 'super_admin'), audit('admin:celebrity_verify', 'Celebrity'), ctrl.verifyCelebrity);
 router.post('/celebrities/:id/toggle-featured', requireRole('admin', 'super_admin'), audit('admin:celebrity_feature', 'Celebrity'), ctrl.toggleFeaturedCelebrity);
+router.post('/celebrities/:id/suspend', requireRole('admin', 'super_admin'), audit('admin:celebrity_suspend', 'Celebrity'), ctrl.suspendCelebrity);
+router.post('/celebrities/:id/delete', requireRole('super_admin'), audit('admin:celebrity_delete', 'Celebrity'), ctrl.deleteCelebrity);
 
-// Events
+// ── Celebrity detail review / reject ─────────────────────────────────────────
+router.post('/celebrities/:id/reject', requireRole('admin', 'super_admin'), audit('admin:celebrity_reject', 'Celebrity'), ctrl.rejectCelebrity);
+
+// ── Events ────────────────────────────────────────────────────────────────────
 router.get('/events', ctrl.getEvents);
+router.get('/events/create', requireRole('admin', 'super_admin'), ctrl.getAdminCreateEvent);
+router.post(
+  '/events/create',
+  requireRole('admin', 'super_admin'),
+  uploadEventBanner.single('banner'),
+  csrfProtection,
+  audit('admin:event_create', 'Event'),
+  ctrl.postAdminCreateEvent
+);
+router.get('/events/:id/edit', requireRole('admin', 'super_admin'), ctrl.getAdminEditEvent);
+router.post(
+  '/events/:id/edit',
+  requireRole('admin', 'super_admin'),
+  uploadEventBanner.single('banner'),
+  csrfProtection,
+  audit('admin:event_edit', 'Event'),
+  ctrl.postAdminEditEvent
+);
 router.post('/events/:id/toggle-featured', requireRole('admin', 'super_admin'), audit('admin:event_feature', 'Event'), ctrl.toggleFeaturedEvent);
+router.post('/events/:id/suspend', requireRole('admin', 'super_admin'), audit('admin:event_suspend', 'Event'), ctrl.suspendEvent);
+router.post('/events/:id/delete', requireRole('super_admin'), audit('admin:event_delete', 'Event'), ctrl.deleteEvent);
 
-// Reviews
+// ── Reviews ───────────────────────────────────────────────────────────────────
 router.get('/reviews', ctrl.getReviews);
 router.post('/reviews/:id/approve', audit('admin:review_approve', 'Review'), ctrl.approveReview);
 router.post('/reviews/:id/delete', audit('admin:review_delete', 'Review'), ctrl.deleteReview);
 
-// Check-in
+// ── Check-in ──────────────────────────────────────────────────────────────────
 router.get('/checkin/:eventId', ctrl.getCheckin);
 router.post('/checkin', ctrl.postCheckin);
 
-// Audit Logs
+// ── Audit Logs ────────────────────────────────────────────────────────────────
 router.get('/audit-logs', requireRole('admin', 'super_admin'), ctrl.getAuditLogs);
-// Celebrity detail / review / reject
-router.get('/celebrities/:id', ctrl.getCelebrityDetail);
-router.post('/celebrities/:id/reject', requireRole('admin', 'super_admin'), audit('admin:celebrity_reject', 'Celebrity'), ctrl.rejectCelebrity);
 
-// Invitations
+// ── Invitations ───────────────────────────────────────────────────────────────
 router.get('/invitations', requireRole('admin', 'super_admin'), ctrl.getInvitations);
 router.post('/invitations', requireRole('admin', 'super_admin'), audit('admin:invitation_create', 'Invitation'), ctrl.postCreateInvitation);
 router.post('/invitations/:id/revoke', requireRole('admin', 'super_admin'), audit('admin:invitation_revoke', 'Invitation'), ctrl.postRevokeInvitation);

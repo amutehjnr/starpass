@@ -8,16 +8,19 @@
   <meta name="csrf-token" content="<%= csrfToken %>">
 </head>
 <body>
-<%- include('../partials/navbar') %>
-<%- include('../partials/flash') %>
+<%- include('../../partials/navbar') %>
+<%- include('../../partials/flash') %>
 
 <div class="dashboard-layout">
-  <%- include('../partials/sidebar') %>
-
+  <%- include('../../partials/sidebar') %>
   <main class="dashboard-content">
-    <div class="page-header">
-      <h1 class="page-title">Manage Events</h1>
-      <p class="page-subtitle"><%= pagination.total %> total events</p>
+
+    <div class="page-header flex-between">
+      <div>
+        <h1 class="page-title">Manage Events</h1>
+        <p class="page-subtitle"><%= pagination.total %> total events</p>
+      </div>
+      <a href="/admin/events/create" class="btn btn-primary">+ Add Event</a>
     </div>
 
     <div class="flex gap-2 mb-6" style="flex-wrap:wrap;">
@@ -28,28 +31,42 @@
 
     <div class="table-wrap content-block" style="padding:0;">
       <table class="table">
-        <thead><tr><th>Event</th><th>Celebrity</th><th>Type</th><th>Date</th><th>Status</th><th>Sold</th><th></th></tr></thead>
+        <thead><tr><th>Event</th><th>Celebrity</th><th>Date</th><th>Status</th><th>Sold</th><th></th></tr></thead>
         <tbody>
           <% events.forEach(e => { %>
           <tr>
-            <td style="font-weight:600;color:var(--text-primary);"><%= e.title %> <% if (e.isFeatured) { %>⭐<% } %></td>
+            <td style="font-weight:600;color:var(--text-primary);">
+              <%= e.title %> <% if (e.isFeatured) { %>⭐<% } %>
+            </td>
             <td>
               <div style="display:flex;align-items:center;gap:var(--space-2);">
                 <img src="<%= e.celebrity?.profileImage?.url || '/images/defaults/avatar.png' %>" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">
                 <span style="font-size:var(--text-sm);"><%= e.celebrity?.stageName %></span>
               </div>
             </td>
-            <td style="text-transform:capitalize;"><%= e.type %></td>
             <td><%= new Date(e.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) %></td>
             <td><span class="badge badge-<%= e.status === 'published' ? 'success' : e.status === 'draft' ? 'muted' : e.status === 'cancelled' ? 'error' : e.status === 'postponed' ? 'warning' : 'info' %>" style="text-transform:capitalize;"><%= e.status %></span></td>
             <td><%= e.totalSold %>/<%= e.totalCapacity %></td>
             <td>
-              <% if (['admin','super_admin'].includes(currentUser.role)) { %>
-              <form action="/admin/events/<%= e._id %>/toggle-featured" method="POST">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <button type="submit" class="btn btn-secondary btn-sm"><%= e.isFeatured ? 'Unfeature' : 'Feature' %></button>
-              </form>
-              <% } %>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <a href="/admin/events/<%= e._id %>/edit" class="btn btn-secondary btn-sm">Edit</a>
+                <form action="/admin/events/<%= e._id %>/toggle-featured" method="POST" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-secondary btn-sm"><%= e.isFeatured ? 'Unfeature' : 'Feature' %></button>
+                </form>
+                <form action="/admin/events/<%= e._id %>/suspend" method="POST" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-sm" style="background:var(--color-warning);color:#000;" onclick="return confirm('<%= e.status === 'postponed' ? 'Reinstate' : 'Suspend' %> this event?')">
+                    <%= e.status === 'postponed' ? 'Reinstate' : 'Suspend' %>
+                  </button>
+                </form>
+                <% if (['draft','cancelled'].includes(e.status) && currentUser.role === 'super_admin') { %>
+                <form action="/admin/events/<%= e._id %>/delete" method="POST" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Permanently delete this event?')">Delete</button>
+                </form>
+                <% } %>
+              </div>
             </td>
           </tr>
           <% }) %>
@@ -68,7 +85,7 @@
   </main>
 </div>
 
-<%- include('../partials/footer') %>
+<%- include('../../partials/footer') %>
 <script src="/js/app.js"></script>
 <script src="/js/dashboard.js"></script>
 </body>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+</head>
+<body>
+<%- include('../../partials/navbar') %>
+<%- include('../../partials/flash') %>
+
+<div class="dashboard-layout">
+  <%- include('../../partials/sidebar') %>
+  <main class="dashboard-content">
+
+    <div class="page-header">
+      <a href="/admin/events" class="btn btn-ghost btn-sm mb-3">← Back to Events</a>
+      <h1 class="page-title">Create Event</h1>
+      <p class="page-subtitle">Create an event on behalf of a celebrity</p>
+    </div>
+
+    <form action="/admin/events/create" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <!-- Banner -->
+      <div class="content-block mb-5">
+        <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Event Banner</h3>
+        <div class="upload-zone">
+          <input type="file" name="banner" accept="image/*" class="upload-zone__input">
+          <div style="font-size:32px;margin-bottom:var(--space-2);">🖼️</div>
+          <div class="upload-zone__title">Upload Banner Image</div>
+          <div class="upload-zone__hint">Recommended 1200×630</div>
+          <img class="upload-zone__preview" style="display:none;max-height:200px;">
+        </div>
+      </div>
+
+      <div class="grid-2 gap-6">
+        <div>
+          <!-- Basic Info -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">Basic Information</h3>
+
+            <div class="form-group">
+              <label class="form-label">Celebrity <span class="required">*</span></label>
+              <select name="celebrityId" class="form-select" required>
+                <option value="">Select a celebrity…</option>
+                <% celebrities.forEach(c => { %>
+                <option value="<%= c._id %>"><%= c.stageName %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Event Title <span class="required">*</span></label>
+              <input type="text" name="title" class="form-input" required maxlength="200">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short Description</label>
+              <input type="text" name="shortDescription" class="form-input" maxlength="500">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Description <span class="required">*</span></label>
+              <textarea name="description" class="form-textarea" rows="5" required></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Event Type <span class="required">*</span></label>
+                <select name="type" id="eventType" class="form-select" required>
+                  <option value="physical">Physical</option>
+                  <option value="virtual">Virtual</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <% ['meet_greet','fan_conference','autograph_session','photo_session','vip_experience','birthday_shoutout','concert','other'].forEach(c => { %>
+                  <option value="<%= c %>"><%= c.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase()) %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Start Date & Time <span class="required">*</span></label>
+                <input type="datetime-local" name="startDate" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">End Date & Time <span class="required">*</span></label>
+                <input type="datetime-local" name="endDate" class="form-input" required>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Timezone</label>
+              <input type="text" name="timezone" class="form-input" value="UTC">
+            </div>
+          </div>
+
+          <!-- Venue -->
+          <div class="content-block mb-5" id="venueFields">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Venue</h3>
+            <div class="form-group"><label class="form-label">Venue Name</label><input type="text" name="venueName" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Address</label><input type="text" name="venueAddress" class="form-input"></div>
+            <div class="form-row" style="margin-bottom:0;">
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">City</label><input type="text" name="venueCity" class="form-input"></div>
+              <div class="form-group" style="margin-bottom:0;"><label class="form-label">Country</label><input type="text" name="venueCountry" class="form-input"></div>
+            </div>
+          </div>
+          <div class="content-block mb-5" id="virtualFields" style="display:none;">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-4);">Virtual Link</h3>
+            <div class="form-group" style="margin-bottom:0;"><label class="form-label">Meeting URL</label><input type="url" name="virtualLink" class="form-input"></div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Ticket Categories -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-2);">Ticket Categories</h3>
+            <p class="form-hint mb-5">Leave blank or 0 to skip a category.</p>
+            <% [
+              { key: 'general', label: 'General Admission', icon: '🎫' },
+              { key: 'premium', label: 'Premium', icon: '🎟️' },
+              { key: 'vip', label: 'VIP', icon: '⭐' },
+              { key: 'platinum_vip', label: 'Platinum VIP', icon: '💎' },
+            ].forEach(cat => { %>
+            <div style="border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-3);">
+              <div style="font-weight:600;margin-bottom:var(--space-3);"><%= cat.icon %> <%= cat.label %></div>
+              <div class="form-row" style="margin-bottom:0;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Price (USD)</label>
+                  <div class="input-group"><span class="input-group-prefix">$</span><input type="number" name="cat_<%= cat.key %>_price" class="form-input" min="0" step="0.01" placeholder="0.00"></div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Capacity</label>
+                  <input type="number" name="cat_<%= cat.key %>_capacity" class="form-input" min="0" placeholder="0">
+                </div>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+
+          <!-- Settings -->
+          <div class="content-block mb-5">
+            <h3 style="font-size:var(--text-base);margin-bottom:var(--space-5);">⚙️ Settings</h3>
+            <div class="form-group">
+              <label class="form-label">Initial Status</label>
+              <select name="status" class="form-select">
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-check">
+                <input type="checkbox" name="isFeatured" class="form-check-input">
+                <span class="form-check-label">Feature on homepage</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Rules & Tags -->
+          <div class="content-block">
+            <div class="form-group">
+              <label class="form-label">Rules & Guidelines</label>
+              <textarea name="rulesAndGuidelines" class="form-textarea" rows="4" placeholder="One per line"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Tags</label>
+              <input type="text" name="tags" class="form-input" placeholder="meet-greet, music, los-angeles">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg mt-6">Create Event</button>
+        </div>
+      </div>
+    </form>
+
+  </main>
+</div>
+
+<%- include('../../partials/footer') %>
+<script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+  const typeSelect = document.getElementById('eventType');
+  const venueFields = document.getElementById('venueFields');
+  const virtualFields = document.getElementById('virtualFields');
+  function toggleVenue() {
+    venueFields.style.display = typeSelect.value === 'virtual' ? 'none' : 'block';
+    virtualFields.style.display = typeSelect.value === 'physical' ? 'none' : 'block';
+  }
+  typeSelect.addEventListener('change', toggleVenue);
+  toggleVenue();
+</script>
+</body>
+</html>

@@ -13,6 +13,10 @@ const logger = require('../config/logger');
 const crypto = require('crypto');
 const Invitation = require('../models/Invitation');
 const { sendTemplateEmail } = require('../services/emailService');
+const crypto = require('crypto');
+const Invitation = require('../models/Invitation');
+const { sendTemplateEmail } = require('../services/emailService');
+const { deleteFile } = require('../config/cloudinary');
 
 // ── Dashboard Analytics ───────────────────────────────────────────────────────
 exports.getDashboard = async (req, res, next) => {
@@ -641,6 +645,488 @@ exports.getAuditLogs = async (req, res, next) => {
       filters: { action },
       pagination: { page: parseInt(page), limit, total, pages: Math.ceil(total / limit) },
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Celebrity Full CRUD ───────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+exports.getCreateCelebrity = async (req, res, next) => {
+  try {
+    res.render('admin/celebrity-create', {
+      title: 'Create Celebrity – StarPass',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postCreateCelebrity = async (req, res, next) => {
+  try {
+    const {
+      firstName, lastName, email, password,
+      stageName, category, shortBio, biography,
+      achievements, tags, basePrice, nationality, genres,
+    } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      req.flash('error', 'A user with this email already exists.');
+      return res.redirect('/admin/celebrities/create');
+    }
+
+    const existingSlug = await Celebrity.findOne({
+      slug: stageName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
+    });
+    if (existingSlug) {
+      req.flash('error', 'A celebrity with this stage name already exists.');
+      return res.redirect('/admin/celebrities/create');
+    }
+
+    const user = await User.create({
+      firstName, lastName, email,
+      password: password || crypto.randomBytes(8).toString('hex'),
+      role: 'celebrity',
+      isActive: true,
+      isEmailVerified: true,
+    });
+
+    let celebrity;
+    try {
+      celebrity = await Celebrity.create({
+        user: user._id,
+        stageName,
+        category,
+        shortBio,
+        biography,
+        achievements: achievements ? achievements.split('\n').filter(Boolean) : [],
+        tags: tags ? tags.split(',').map((t) => t.trim().toLowerCase()) : [],
+        basePrice: parseFloat(basePrice) || 0,
+        isVerified: req.body.isVerified === 'on',
+        isFeatured: req.body.isFeatured === 'on',
+        isActive: true,
+        applicationSource: 'admin_invited',
+        verifiedAt: req.body.isVerified === 'on' ? new Date() : undefined,
+        metadata: {
+          nationality,
+          genres: genres ? genres.split(',').map((g) => g.trim()) : [],
+        },
+      });
+    } catch (err) {
+      await User.findByIdAndDelete(user._id).catch(() => {});
+      throw err;
+    }
+
+    if (req.files?.profileImage?.[0]) {
+      await Celebrity.findByIdAndUpdate(celebrity._id, {
+        profileImage: { url: req.files.profileImage[0].path, publicId: req.files.profileImage[0].filename },
+      });
+    }
+    if (req.files?.heroImage?.[0]) {
+      await Celebrity.findByIdAndUpdate(celebrity._id, {
+        heroImage: { url: req.files.heroImage[0].path, publicId: req.files.heroImage[0].filename },
+      });
+    }
+
+    await AuditLog.create({
+      actor: req.user._id,
+      actorRole: req.user.role,
+      action: 'admin:celebrity_create',
+      resource: 'Celebrity',
+      resourceId: celebrity._id,
+      details: { stageName, email },
+      ipAddress: req.ip,
+      status: 'success',
+    });
+
+    req.flash('success', `Celebrity "${stageName}" created successfully.`);
+    res.redirect(`/admin/celebrities/${celebrity._id}`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getEditCelebrity = async (req, res, next) => {
+  try {
+    const celebrity = await Celebrity.findById(req.params.id)
+      .populate({ path: 'user', select: 'firstName lastName email isActive role' });
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    res.render('admin/celebrity-edit', {
+      title: `Edit – ${celebrity.stageName}`,
+      celebrity,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postEditCelebrity = async (req, res, next) => {
+  try {
+    const {
+      stageName, category, shortBio, biography,
+      achievements, tags, basePrice, nationality, genres,
+      firstName, lastName,
+    } = req.body;
+
+    const celebrity = await Celebrity.findById(req.params.id).populate('user');
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    // Update User name if changed
+    if (firstName || lastName) {
+      await User.findByIdAndUpdate(celebrity.user._id, {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+      });
+    }
+
+    celebrity.stageName = stageName || celebrity.stageName;
+    celebrity.category = category || celebrity.category;
+    celebrity.shortBio = shortBio;
+    celebrity.biography = biography;
+    celebrity.achievements = achievements ? achievements.split('\n').filter(Boolean) : celebrity.achievements;
+    celebrity.tags = tags ? tags.split(',').map((t) => t.trim().toLowerCase()) : celebrity.tags;
+    celebrity.basePrice = parseFloat(basePrice) || celebrity.basePrice;
+    celebrity.isVerified = req.body.isVerified === 'on';
+    celebrity.isFeatured = req.body.isFeatured === 'on';
+    if (req.body.isVerified === 'on' && !celebrity.verifiedAt) {
+      celebrity.verifiedAt = new Date();
+    }
+    celebrity.metadata = {
+      nationality: nationality || celebrity.metadata?.nationality,
+      genres: genres ? genres.split(',').map((g) => g.trim()) : celebrity.metadata?.genres || [],
+      languages: celebrity.metadata?.languages || [],
+    };
+
+    if (req.files?.profileImage?.[0]) {
+      if (celebrity.profileImage?.publicId) {
+        await deleteFile(celebrity.profileImage.publicId).catch(() => {});
+      }
+      celebrity.profileImage = { url: req.files.profileImage[0].path, publicId: req.files.profileImage[0].filename };
+    }
+    if (req.files?.heroImage?.[0]) {
+      if (celebrity.heroImage?.publicId) {
+        await deleteFile(celebrity.heroImage.publicId).catch(() => {});
+      }
+      celebrity.heroImage = { url: req.files.heroImage[0].path, publicId: req.files.heroImage[0].filename };
+    }
+
+    await celebrity.save();
+
+    req.flash('success', `${celebrity.stageName} updated successfully.`);
+    res.redirect(`/admin/celebrities/${celebrity._id}`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.suspendCelebrity = async (req, res, next) => {
+  try {
+    const celebrity = await Celebrity.findById(req.params.id).populate('user');
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    const newStatus = !celebrity.isActive;
+    celebrity.isActive = newStatus;
+    await celebrity.save();
+
+    // Also suspend/restore the user account
+    await User.findByIdAndUpdate(celebrity.user._id, { isActive: newStatus });
+
+    // If suspending, unpublish all their events
+    if (!newStatus) {
+      await Event.updateMany(
+        { celebrity: celebrity._id, status: 'published' },
+        { $set: { status: 'postponed' } }
+      );
+    }
+
+    req.flash(
+      'success',
+      `${celebrity.stageName} has been ${newStatus ? 'reinstated' : 'suspended'}.`
+    );
+    res.redirect('/admin/celebrities');
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteCelebrity = async (req, res, next) => {
+  try {
+    const celebrity = await Celebrity.findById(req.params.id).populate('user');
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    // Clean up Cloudinary assets
+    if (celebrity.profileImage?.publicId) await deleteFile(celebrity.profileImage.publicId).catch(() => {});
+    if (celebrity.heroImage?.publicId) await deleteFile(celebrity.heroImage.publicId).catch(() => {});
+    for (const g of celebrity.gallery || []) {
+      if (g.publicId) await deleteFile(g.publicId).catch(() => {});
+    }
+
+    // Cancel all their events
+    await Event.updateMany({ celebrity: celebrity._id }, { $set: { status: 'cancelled' } });
+
+    // Delete fan club
+    const { FanClub } = require('../models/index');
+    if (celebrity.fanClub) await FanClub.findByIdAndDelete(celebrity.fanClub).catch(() => {});
+
+    // Delete user account
+    if (celebrity.user) await User.findByIdAndDelete(celebrity.user._id).catch(() => {});
+
+    // Delete celebrity
+    await Celebrity.findByIdAndDelete(celebrity._id);
+
+    req.flash('success', `${celebrity.stageName} and all associated data have been deleted.`);
+    res.redirect('/admin/celebrities');
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Event Full CRUD ───────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+exports.getAdminCreateEvent = async (req, res, next) => {
+  try {
+    const celebrities = await Celebrity.find({ isActive: true, isVerified: true })
+      .select('stageName profileImage')
+      .sort({ stageName: 1 });
+
+    res.render('admin/event-create', {
+      title: 'Create Event – StarPass',
+      celebrities,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postAdminCreateEvent = async (req, res, next) => {
+  try {
+    const {
+      title, description, shortDescription, type, category,
+      startDate, endDate, timezone, celebrityId,
+      venueName, venueAddress, venueCity, venueCountry, virtualLink,
+      rulesAndGuidelines, tags,
+    } = req.body;
+
+    const celebrity = await Celebrity.findById(celebrityId);
+    if (!celebrity) throw new AppError('Celebrity not found.', 404);
+
+    const ticketCategories = [];
+    const categoryNames = ['general', 'premium', 'vip', 'platinum_vip'];
+    const categoryLabels = {
+      general: 'General Admission', premium: 'Premium',
+      vip: 'VIP', platinum_vip: 'Platinum VIP',
+    };
+    const defaultBenefits = {
+      general: ['Event Access'],
+      premium: ['Event Access', 'Priority Entry', 'Better Seating'],
+      vip: ['Event Access', 'Meet Celebrity', 'Professional Photo', 'Autograph Session', 'Front Row Access'],
+      platinum_vip: ['Private Meet & Greet', 'VIP Lounge', 'Premium Merchandise', 'Personal Interaction', 'Professional Photo'],
+    };
+
+    categoryNames.forEach((name) => {
+      const price = parseFloat(req.body[`cat_${name}_price`]);
+      const capacity = parseInt(req.body[`cat_${name}_capacity`]);
+      if (price >= 0 && capacity > 0) {
+        ticketCategories.push({
+          name, label: categoryLabels[name], price, capacity,
+          benefits: defaultBenefits[name], isActive: true,
+        });
+      }
+    });
+
+    const event = await Event.create({
+      title, description, shortDescription, type, category,
+      celebrity: celebrity._id,
+      organizer: req.user._id,
+      venue: { name: venueName, address: venueAddress, city: venueCity, country: venueCountry, virtualLink },
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      timezone: timezone || 'UTC',
+      ticketCategories,
+      rulesAndGuidelines: rulesAndGuidelines ? rulesAndGuidelines.split('\n').filter(Boolean) : [],
+      tags: tags ? tags.split(',').map((t) => t.trim().toLowerCase()) : [],
+      status: req.body.status || 'draft',
+      isFeatured: req.body.isFeatured === 'on',
+      publishedAt: req.body.status === 'published' ? new Date() : undefined,
+    });
+
+    if (req.file) {
+      await Event.findByIdAndUpdate(event._id, {
+        banner: { url: req.file.path, publicId: req.file.filename },
+      });
+    }
+
+    req.flash('success', `Event "${title}" created successfully.`);
+    res.redirect(`/admin/events/${event._id}/edit`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAdminEditEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id)
+      .populate({ path: 'celebrity', select: 'stageName profileImage' });
+    if (!event) throw new AppError('Event not found.', 404);
+
+    const celebrities = await Celebrity.find({ isActive: true, isVerified: true })
+      .select('stageName profileImage')
+      .sort({ stageName: 1 });
+
+    res.render('admin/event-edit', {
+      title: `Edit – ${event.title}`,
+      event,
+      celebrities,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postAdminEditEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) throw new AppError('Event not found.', 404);
+
+    const {
+      title, description, shortDescription, type, category,
+      startDate, endDate, timezone, celebrityId,
+      venueName, venueAddress, venueCity, venueCountry, virtualLink,
+      rulesAndGuidelines, tags, status,
+    } = req.body;
+
+    event.title = title || event.title;
+    event.description = description || event.description;
+    event.shortDescription = shortDescription;
+    event.type = type || event.type;
+    event.category = category || event.category;
+    if (celebrityId) event.celebrity = celebrityId;
+    event.venue = {
+      name: venueName, address: venueAddress,
+      city: venueCity, country: venueCountry, virtualLink,
+      coordinates: event.venue?.coordinates,
+    };
+    if (startDate) event.startDate = new Date(startDate);
+    if (endDate) event.endDate = new Date(endDate);
+    event.timezone = timezone || event.timezone;
+    event.rulesAndGuidelines = rulesAndGuidelines
+      ? rulesAndGuidelines.split('\n').filter(Boolean)
+      : event.rulesAndGuidelines;
+    event.tags = tags
+      ? tags.split(',').map((t) => t.trim().toLowerCase())
+      : event.tags;
+    event.isFeatured = req.body.isFeatured === 'on';
+
+    // Status change handling
+    if (status && status !== event.status) {
+      event.status = status;
+      if (status === 'published' && !event.publishedAt) event.publishedAt = new Date();
+      if (status === 'cancelled') event.cancelledAt = new Date();
+    }
+
+    // Ticket categories
+    const categoryNames = ['general', 'premium', 'vip', 'platinum_vip'];
+    const categoryLabels = {
+      general: 'General Admission', premium: 'Premium',
+      vip: 'VIP', platinum_vip: 'Platinum VIP',
+    };
+    const defaultBenefits = {
+      general: ['Event Access'],
+      premium: ['Event Access', 'Priority Entry', 'Better Seating'],
+      vip: ['Event Access', 'Meet Celebrity', 'Professional Photo', 'Autograph Session', 'Front Row Access'],
+      platinum_vip: ['Private Meet & Greet', 'VIP Lounge', 'Premium Merchandise', 'Personal Interaction', 'Professional Photo'],
+    };
+
+    categoryNames.forEach((name) => {
+      const price = parseFloat(req.body[`cat_${name}_price`]);
+      const capacity = parseInt(req.body[`cat_${name}_capacity`]);
+      const existing = event.ticketCategories.find((c) => c.name === name);
+
+      if (price >= 0 && capacity > 0) {
+        if (existing) {
+          existing.price = price;
+          existing.capacity = Math.max(capacity, existing.sold);
+          existing.isActive = true;
+        } else {
+          event.ticketCategories.push({
+            name, label: categoryLabels[name], price, capacity,
+            benefits: defaultBenefits[name], isActive: true,
+          });
+        }
+      } else if (existing) {
+        existing.isActive = false;
+      }
+    });
+
+    if (req.file) {
+      if (event.banner?.publicId) await deleteFile(event.banner.publicId).catch(() => {});
+      event.banner = { url: req.file.path, publicId: req.file.filename };
+    }
+
+    await event.save();
+
+    req.flash('success', `Event "${event.title}" updated successfully.`);
+    res.redirect(`/admin/events/${event._id}/edit`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.suspendEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) throw new AppError('Event not found.', 404);
+
+    const wasSuspended = event.status === 'postponed' && event._suspendedByAdmin;
+    const newStatus = wasSuspended ? 'published' : 'postponed';
+    event.status = newStatus;
+    event._suspendedByAdmin = !wasSuspended;
+    await event.save();
+
+    req.flash(
+      'success',
+      `Event "${event.title}" has been ${wasSuspended ? 'reinstated' : 'suspended'}.`
+    );
+    res.redirect('/admin/events');
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.deleteEvent = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) throw new AppError('Event not found.', 404);
+
+    // Only allow deleting draft or cancelled events
+    if (!['draft', 'cancelled'].includes(event.status)) {
+      req.flash(
+        'error',
+        'Only draft or cancelled events can be deleted. Suspend or cancel the event first.'
+      );
+      return res.redirect('/admin/events');
+    }
+
+    // Clean up banner from Cloudinary
+    if (event.banner?.publicId) await deleteFile(event.banner.publicId).catch(() => {});
+    for (const g of event.gallery || []) {
+      if (g.publicId) await deleteFile(g.publicId).catch(() => {});
+    }
+
+    // Cancel any pending tickets
+    const Ticket = require('../models/Ticket');
+    await Ticket.updateMany({ event: event._id, status: 'pending_payment' }, { $set: { status: 'cancelled' } });
+
+    await Event.findByIdAndDelete(event._id);
+
+    req.flash('success', `Event "${event.title}" has been permanently deleted.`);
+    res.redirect('/admin/events');
   } catch (err) {
     next(err);
   }
