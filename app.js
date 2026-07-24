@@ -30,7 +30,11 @@ const apiRoutes = require('./routes/api');
 const app = express();
 
 // ─── Trust Proxy (Render) ────────────────────────────────────────────────────
-app.set('trust proxy', 1);
+// Render sits behind its own load balancer AND Cloudflare's edge, so there are
+// 2+ hops in front of the app. `true` trusts the whole X-Forwarded-For chain
+// and takes the left-most (original client) address as req.ip. This is safe
+// here because the app is only reachable through Render's proxy, not directly.
+app.set('trust proxy', true);
 
 // ─── View Engine ─────────────────────────────────────────────────────────────
 app.set('view engine', 'ejs');
