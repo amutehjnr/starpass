@@ -1,7 +1,18 @@
 'use strict';
 
+const geoip = require('geoip-lite');
 const { AuditLog } = require('../models/index');
 const logger = require('../config/logger');
+
+// Resolve a rough location from an IP address. Returns nulls for local/private
+// IPs (e.g. ::1, 127.0.0.1, 192.168.x.x) since those can't be geolocated.
+const resolveLocation = (ip) => {
+  if (!ip) return { city: null, region: null, country: null };
+  const cleanIp = ip.replace('::ffff:', ''); // normalize IPv4-mapped IPv6
+  const geo = geoip.lookup(cleanIp);
+  if (!geo) return { city: null, region: null, country: null };
+  return { city: geo.city || null, region: geo.region || null, country: geo.country || null };
+};
 
 const audit = (action, resource) => async (req, res, next) => {
   const originalJson = res.json.bind(res);
@@ -32,6 +43,7 @@ const audit = (action, resource) => async (req, res, next) => {
           body: sanitizeBody(req.body),
         },
         ipAddress: req.ip,
+        location: resolveLocation(req.ip),
         userAgent: req.headers['user-agent'],
         status: res.statusCode < 400 ? 'success' : 'failure',
       });

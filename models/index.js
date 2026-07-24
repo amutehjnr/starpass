@@ -118,6 +118,11 @@ const auditLogSchema = new mongoose.Schema(
     resourceId: { type: mongoose.Schema.Types.ObjectId },
     details: { type: mongoose.Schema.Types.Mixed },
     ipAddress: String,
+    location: {
+      city: String,
+      region: String,
+      country: String,
+    },
     userAgent: String,
     status: { type: String, enum: ['success', 'failure'], default: 'success' },
   },

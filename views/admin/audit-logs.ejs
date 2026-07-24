@@ -32,7 +32,7 @@
 
     <div class="table-wrap content-block" style="padding:0;">
       <table class="table">
-        <thead><tr><th>Action</th><th>Actor</th><th>Resource</th><th>Status</th><th>IP</th><th>Time</th></tr></thead>
+        <thead><tr><th>Action</th><th>Actor</th><th>Resource</th><th>Status</th><th>IP</th><th>Location</th><th>Time</th></tr></thead>
         <tbody>
           <% logs.forEach(log => { %>
           <tr>
@@ -41,6 +41,13 @@
             <td style="font-size:var(--text-sm);color:var(--text-muted);"><%= log.resource || '–' %></td>
             <td><span class="badge badge-<%= log.status === 'success' ? 'success' : 'error' %>"><%= log.status %></span></td>
             <td style="font-size:var(--text-xs);color:var(--text-muted);font-family:var(--font-mono);"><%= log.ipAddress %></td>
+            <td style="font-size:var(--text-xs);color:var(--text-muted);">
+              <% if (log.location && (log.location.city || log.location.country)) { %>
+                <%= [log.location.city, log.location.region, log.location.country].filter(Boolean).join(', ') %>
+              <% } else { %>
+                –
+              <% } %>
+            </td>
             <td style="font-size:var(--text-xs);color:var(--text-muted);"><%= new Date(log.createdAt).toLocaleString() %></td>
           </tr>
           <% }) %>
